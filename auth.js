@@ -64,7 +64,7 @@
     const names = meta.sheets.map((s) => s.properties.title);
     const ranges = names.map((n) => `ranges=${encodeURIComponent("'" + n.replace(/'/g, "''") + "'")}`).join('&');
     const data = await apiGet(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${ranges}`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${ranges}&valueRenderOption=UNFORMATTED_VALUE`,
       token
     );
     const result = {};
