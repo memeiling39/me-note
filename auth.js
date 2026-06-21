@@ -94,23 +94,39 @@
       </div>`;
   }
 
-  // Main convenience: try silent fetch, else render sign-in button.
-  // onData(sheetMap) is called when data is ready.
+  function signInThenLoad(spreadsheetId, container, onData) {
+    renderSignInUI(container, null, async () => {
+      try {
+        renderLoading(container);
+        await getToken({ interactive: true });
+        const data = await fetchAllSheets(spreadsheetId);
+        onData(data);
+      } catch (err) {
+        console.error('Sign-in failed:', err);
+        renderSignInUI(container, 'เข้าสู่ระบบไม่สำเร็จ: ' + err.message + ' — ลองกดอีกครั้ง', () => signInThenLoad(spreadsheetId, container, onData));
+      }
+    });
+  }
+
+  function renderLoading(container) {
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--me-muted)"><div style="font-size:2rem;margin-bottom:0.5rem">⏳</div><div>กำลังโหลดข้อมูล…</div></div>`;
+  }
+
+  // Main convenience: if we have a stored token, try fetching;
+  // otherwise show sign-in button immediately (avoids hangs from silent auth race).
   async function loadAllSheets(spreadsheetId, container, onData) {
+    const stored = getStoredToken();
+    if (!stored) {
+      signInThenLoad(spreadsheetId, container, onData);
+      return;
+    }
     try {
       const data = await fetchAllSheets(spreadsheetId);
       onData(data);
     } catch (err) {
-      // any error → assume need to sign in (token expired, missing, etc.)
-      renderSignInUI(container, null, async () => {
-        try {
-          await getToken({ interactive: true });
-          const data = await fetchAllSheets(spreadsheetId);
-          onData(data);
-        } catch (err2) {
-          renderError(container, 'เข้าสู่ระบบไม่สำเร็จ: ' + err2.message);
-        }
-      });
+      console.error('Fetch failed, asking re-auth:', err);
+      sessionStorage.removeItem(TOKEN_KEY);
+      signInThenLoad(spreadsheetId, container, onData);
     }
   }
 
