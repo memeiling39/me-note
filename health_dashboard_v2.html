@@ -56,8 +56,9 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="auth.js"></script>
 <script>
-const SHEET_API='https://script.google.com/macros/s/AKfycbwkNt1CbFT5f2cYVIpxzjjX-3gP2eMdsh4SBeprF6fAu__fL8Cq9knVfFmXZhg0yDESIA/exec';
+const SHEET_ID='1A9wu_pMHTTN4Kg_6iSY1HZpgMgiwVeK-zuuCHlPP-8c';
 
 // fallback categories & units when sheet's column A is blank
 const CAT_HINT={Glucose:'น้ำตาลในเลือด','Uric acid':'กรดยูริค','Uric pH':'กรดยูริค'};
@@ -81,36 +82,29 @@ let yrs=[],metrics=[];
 
 function toNum(v){if(v===''||v==null)return null;const n=typeof v==='number'?v:parseFloat(v);return isNaN(n)?null:n;}
 
-window.__healthCB=function(data){
-  try{
-    // data = { sheetName: [[row1], [row2], ...] } — use first sheet
-    const sheetName=Object.keys(data)[0];
-    const rows=data[sheetName];
-    if(!rows||rows.length<2)throw new Error('ไม่พบข้อมูลใน sheet');
-    const header=rows[0];
-    yrs=header.slice(2).map(v=>prettyYear(String(v)));
-    let lastCat='อื่นๆ';
-    metrics=rows.slice(1).map(r=>{
-      const catCell=String(r[0]||'').trim();
-      const nameCell=String(r[1]||'').trim();
-      const nm=nameCell.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
-      const name=nm?nm[1].trim():nameCell;
-      const rng=nm?parseRange(nm[2]):{min:null,max:null,disp:''};
-      const cat=catCell||CAT_HINT[name]||lastCat;
-      lastCat=cat;
-      const vals=r.slice(2,2+yrs.length).map(toNum);
-      return{name,range:rng.disp,min:rng.min,max:rng.max,vals,cat,unit:UNIT_HINT[name]||''};
-    }).filter(m=>m.name);
-    init();
-  }catch(err){
-    document.getElementById('hdr').innerHTML=`<p style="color:var(--me-alert-text);padding:1rem;background:var(--me-alert-bg);border-radius:8px">ประมวลผลข้อมูลล้มเหลว: ${err.message}</p>`;
-  }
-};
+function handleSheetData(data){
+  // data = { sheetName: [[row1], [row2], ...] } — use first sheet
+  const sheetName=Object.keys(data)[0];
+  const rows=data[sheetName];
+  if(!rows||rows.length<2)throw new Error('ไม่พบข้อมูลใน sheet');
+  const header=rows[0];
+  yrs=header.slice(2).map(v=>prettyYear(String(v)));
+  let lastCat='อื่นๆ';
+  metrics=rows.slice(1).map(r=>{
+    const catCell=String(r[0]||'').trim();
+    const nameCell=String(r[1]||'').trim();
+    const nm=nameCell.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    const name=nm?nm[1].trim():nameCell;
+    const rng=nm?parseRange(nm[2]):{min:null,max:null,disp:''};
+    const cat=catCell||CAT_HINT[name]||lastCat;
+    lastCat=cat;
+    const vals=r.slice(2,2+yrs.length).map(toNum);
+    return{name,range:rng.disp,min:rng.min,max:rng.max,vals,cat,unit:UNIT_HINT[name]||''};
+  }).filter(m=>m.name);
+  init();
+}
 
-const s=document.createElement('script');
-s.src=`${SHEET_API}?callback=__healthCB`;
-s.onerror=()=>{document.getElementById('hdr').innerHTML=`<p style="color:var(--me-alert-text);padding:1rem;background:var(--me-alert-bg);border-radius:8px">โหลดข้อมูลไม่สำเร็จ — ลองเช็คว่า login Google ด้วยบัญชีที่เป็นเจ้าของ Apps Script หรือยัง</p>`;};
-document.head.appendChild(s);
+MeNoteAuth.loadAllSheets(SHEET_ID, document.getElementById('hdr'), handleSheetData);
 
 const catColors={
   'ไขมัน':['#E25A53','#5FBFBA','#FDB35D','#8A4A8C'],

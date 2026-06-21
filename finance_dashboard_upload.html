@@ -6,6 +6,7 @@
 <title>Finance Dashboard</title>
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<script src="auth.js"></script>
 <style>
 :root{
   --blue:#5FBFBA;--green:#7FCBC5;--red:#E25A53;--amber:#FDB35D;
@@ -517,8 +518,8 @@ dz.addEventListener('drop', e => {
   handleFile(e.dataTransfer.files[0]);
 });
 
-// ── Auto-load from private Google Sheet via Apps Script Web App ──────────────
-const SHEET_API = 'https://script.google.com/macros/s/AKfycbyW_ekMQo0y-sQZ7mmCoceguRCEP5Oj1mDsLVN9fG9pz0xECdE483AJlgA-3X_Wt_ueaw/exec';
+// ── Auto-load from private Google Sheet via Google Sheets API ────────────────
+const SHEET_ID = '15AyMzyDcm8DZntW9l_R0_pSUEFRVCVvucKmPYyMfomI';
 
 // Build a fake SheetJS workbook from { sheetName: [[row],...] } so the existing
 // cell-address parseExcel logic can work unchanged.
@@ -540,35 +541,19 @@ function buildWorkbook(data) {
 }
 
 const upload = document.getElementById('upload-screen');
-const uploadOrig = upload.innerHTML;
 upload.innerHTML = `<div style="text-align:center;color:var(--me-muted);font-family:'BoonJot',sans-serif"><div style="font-size:2rem;margin-bottom:1rem">📊</div><div>กำลังโหลดข้อมูลจาก Google Sheet…</div></div>`;
 
-window.__financeCB = function(data) {
+MeNoteAuth.loadAllSheets(SHEET_ID, upload, (data) => {
   try {
     const wb = buildWorkbook(data);
     const D = parseExcel(wb);
     renderDashboard(D, 'Google Sheet');
   } catch (err) {
-    showFallback('ประมวลผลข้อมูลล้มเหลว: ' + err.message);
+    const eb = document.getElementById('error-box');
+    eb.style.display = 'block';
+    eb.innerHTML = `⚠️ ประมวลผลข้อมูลล้มเหลว: ${err.message}`;
   }
-};
-
-function showFallback(msg) {
-  upload.innerHTML = uploadOrig;
-  const eb = document.getElementById('error-box');
-  eb.style.display = 'block';
-  eb.innerHTML = `⚠️ ${msg}<br><span style="font-size:.8rem;font-weight:400">ตรวจสอบว่า login Google ด้วยบัญชีเจ้าของ Apps Script — หรือลากไฟล์ .xlsx มาที่นี่ได้</span>`;
-  document.getElementById('file-input').addEventListener('change', e => handleFile(e.target.files[0]));
-  const dz2 = document.getElementById('drop-zone');
-  dz2.addEventListener('dragover', e => { e.preventDefault(); dz2.classList.add('drag'); });
-  dz2.addEventListener('dragleave', () => dz2.classList.remove('drag'));
-  dz2.addEventListener('drop', e => { e.preventDefault(); dz2.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
-}
-
-const s = document.createElement('script');
-s.src = `${SHEET_API}?callback=__financeCB`;
-s.onerror = () => showFallback('โหลดข้อมูลไม่สำเร็จ');
-document.head.appendChild(s);
+});
 </script>
 </body>
 </html>
