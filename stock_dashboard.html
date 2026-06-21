@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock · Me-Note</title>
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="auth.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body.me-themed { background: #fff; }
+  body { padding-bottom: 3rem; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1rem; }
+
+  h1 {
+    font-family: 'BoonJot', sans-serif;
+    font-size: 1.75rem;
+    margin: 1.25rem 0 0.25rem;
+    color: var(--me-ink);
+  }
+  .sub { color: var(--me-muted); font-size: 0.85rem; margin-bottom: 1.25rem; }
+
+  /* summary cards */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+  .stat {
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-sm);
+    padding: 0.75rem 0.8rem;
+    text-align: left;
+  }
+  .stat .label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--me-muted);
+    margin-bottom: 4px;
+  }
+  .stat .value {
+    font-family: 'BoonJot', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--me-ink);
+  }
+  .stat.alert .value { color: var(--me-coral); }
+  .stat.ok .value { color: var(--me-teal-ink); }
+
+  /* tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-pill);
+    padding: 4px;
+    margin-bottom: 1rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--me-radius-pill);
+    font-family: 'BoonJot', sans-serif;
+    font-size: 0.9rem;
+    color: var(--me-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    background: var(--me-teal);
+    color: var(--me-teal-ink);
+    font-weight: 700;
+  }
+
+  /* search + filters */
+  .controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .search {
+    flex: 1;
+    min-width: 180px;
+    padding: 10px 14px;
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-pill);
+    background: var(--me-surface);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--me-ink);
+    outline: none;
+  }
+  .search:focus { border-color: var(--me-teal); }
+  .filter-select {
+    padding: 10px 36px 10px 16px;
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-pill);
+    background-color: var(--me-surface);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='none' stroke='%238A7F6E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5L6 8l3.5-3.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--me-ink);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  /* type group */
+  .type-group { margin-bottom: 1.5rem; }
+  .type-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0.5rem 0.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--me-border);
+  }
+  .type-name {
+    font-family: 'BoonJot', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--me-ink);
+  }
+  .type-count {
+    font-size: 0.8rem;
+    color: var(--me-muted);
+  }
+
+  /* item rows (grouped by barcode/name) */
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--me-border);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .item:hover { background: var(--me-cream); }
+  .item-photo {
+    width: 48px; height: 48px;
+    border-radius: var(--me-radius-sm);
+    background: #fff;
+    border: 1px solid var(--me-border);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .item:last-child { border-bottom: none; }
+  .item-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .item-name {
+    font-weight: 500;
+    color: var(--me-ink);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-meta {
+    font-size: 0.8rem;
+    color: var(--me-muted);
+  }
+  .item-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .item-expiry {
+    font-size: 0.85rem;
+    color: var(--me-ink-soft);
+  }
+  .item-expiry.soon { color: var(--me-coral); font-weight: 700; }
+  .item-expiry.warn { color: var(--me-orange-ink); font-weight: 500; }
+  .item-loc {
+    font-size: 0.75rem;
+    color: var(--me-muted);
+    margin-top: 2px;
+  }
+
+  .empty, .loading, .error {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--me-muted);
+  }
+  .error { color: var(--me-coral); }
+
+  .count-pills {
+    display: inline-flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--me-radius-pill);
+  }
+  .pill.active { background: var(--me-teal-soft); color: var(--me-teal-ink); }
+  .pill.stock { background: var(--me-orange-soft); color: var(--me-orange-ink); }
+  .pill.finished { background: #eee; color: #777; }
+
+  @media (max-width: 480px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    h1 { font-size: 1.5rem; }
+  }
+
+  /* ── modal ── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(31, 27, 22, 0.4);
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: var(--me-radius);
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    overflow: hidden;
+    animation: pop 0.18s ease;
+  }
+  @keyframes pop {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  .modal-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--me-border);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1;
+  }
+  .modal-photo-wrap {
+    position: relative;
+    background: #fff;
+    padding: 2rem 1rem 1rem;
+    text-align: center;
+  }
+  .modal-photo {
+    max-width: 220px;
+    max-height: 220px;
+    width: auto; height: auto;
+    object-fit: contain;
+  }
+  .modal-body { padding: 0.5rem 1.5rem 1.5rem; }
+  .modal-field {
+    margin-bottom: 1rem;
+  }
+  .modal-field .label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--me-muted);
+    margin-bottom: 4px;
+  }
+  .modal-field .value {
+    font-family: 'BoonJot', sans-serif;
+    font-size: 1.1rem;
+    color: var(--me-ink);
+    font-weight: 500;
+  }
+  .modal-divider {
+    height: 1px;
+    background: var(--me-border);
+    margin: 1rem 0;
+  }
+  .modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .modal-table th {
+    text-align: left;
+    padding: 0.5rem 0.4rem;
+    font-family: 'BoonJot', sans-serif;
+    font-weight: 700;
+    color: var(--me-ink);
+    border-bottom: 1px solid var(--me-border);
+  }
+  .modal-table td {
+    padding: 0.6rem 0.4rem;
+    border-bottom: 1px solid var(--me-border);
+    color: var(--me-ink-soft);
+  }
+  .modal-table tr:last-child td { border-bottom: none; }
+  .modal-table .expiry-soon { color: var(--me-coral); font-weight: 700; }
+  .modal-table .expiry-warn { color: var(--me-orange-ink); font-weight: 500; }
+</style>
+</head>
+<body class="me-themed">
+  <a href="index.html" class="me-back">← กลับ</a>
+  <div class="wrap">
+    <h1>Stock</h1>
+    <p class="sub">สรุปคลังของใช้ เครื่องสำอาง และของกิน</p>
+
+    <div class="summary" id="summary"></div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-cat="เครื่องสำอาง">Cosmetics</button>
+      <button class="tab" data-cat="ของใช้">Goods</button>
+      <button class="tab" data-cat="ของกิน">Food</button>
+      <button class="tab" data-cat="__all__">All</button>
+    </div>
+
+    <div class="controls">
+      <input class="search" id="search" placeholder="ค้นชื่อ / location / batch...">
+      <select class="filter-select" id="status-filter">
+        <option value="">All status</option>
+        <option value="Active">Active</option>
+        <option value="Stock">Stock</option>
+        <option value="Finished">Finished</option>
+      </select>
+      <select class="filter-select" id="location-filter">
+        <option value="">All locations</option>
+      </select>
+    </div>
+
+    <div id="content" class="loading">กำลังโหลด...</div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+  </div>
+
+<script>
+const SHEET_ID = '1UhQhc_ht5iKMwG5YfsXQEvkxGFn1KTNVxcwexmLfvUE';
+const PHOTO_FOLDER_ID = '1UxjTF-RuRc0aUdn-kKpKrRISr9tHlEY4';
+const PHOTO_MAP_CACHE_KEY = 'me-note-stock-photo-map';
+
+let allRows = [];
+let photoMap = {};  // filename → file id
+let currentCat = 'เครื่องสำอาง';
+
+// ── parse messy date: "21/5/28", "4/4/2027", "11/22/2025" ──
+function parseExpiry(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (!m) return null;
+  let [, a, b, y] = m.map(Number);
+  if (y < 100) y += 2000;
+  // try dd/mm/yyyy first; if month > 12 it's mm/dd/yyyy
+  let day = a, month = b;
+  if (month > 12 && day <= 12) { day = b; month = a; }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return new Date(y, month - 1, day);
+}
+
+function daysUntil(date) {
+  if (!date) return null;
+  const now = new Date();
+  return Math.floor((date - now) / (1000 * 60 * 60 * 24));
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+function render() {
+  const search = document.getElementById('search').value.toLowerCase().trim();
+  const statusFilter = document.getElementById('status-filter').value;
+  const locFilter = document.getElementById('location-filter').value;
+
+  let rows = allRows;
+  if (currentCat !== '__all__') {
+    rows = rows.filter(r => r.category === currentCat);
+  }
+  if (statusFilter) rows = rows.filter(r => r.status === statusFilter);
+  if (locFilter) rows = rows.filter(r => r.location === locFilter);
+  if (search) {
+    rows = rows.filter(r =>
+      r.name.toLowerCase().includes(search) ||
+      r.location.toLowerCase().includes(search) ||
+      r.batch.toLowerCase().includes(search) ||
+      r.detail.toLowerCase().includes(search)
+    );
+  }
+
+  // group: by Type, then by (Barcode + Name)
+  const byType = new Map();
+  for (const r of rows) {
+    const type = r.type || '(ไม่ระบุ)';
+    if (!byType.has(type)) byType.set(type, new Map());
+    const key = `${r.barcode}|${r.name}`;
+    const grp = byType.get(type);
+    if (!grp.has(key)) grp.set(key, { key, name: r.name, items: [] });
+    grp.get(key).items.push(r);
+  }
+
+  // refresh flat lookup for modal
+  lastGroups = {};
+  for (const grp of byType.values()) {
+    for (const g of grp.values()) lastGroups[g.key] = g;
+  }
+
+  const sortedTypes = [...byType.keys()].sort((a, b) => a.localeCompare(b, 'th'));
+  const content = document.getElementById('content');
+
+  if (!sortedTypes.length) {
+    content.className = 'empty';
+    content.textContent = 'ไม่มีข้อมูล';
+    return;
+  }
+
+  content.className = '';
+  content.innerHTML = sortedTypes.map(type => {
+    const groups = [...byType.get(type).values()];
+    // total qty across all variants in this type
+    const totalQty = groups.reduce((s, g) => s + g.items.reduce((q, i) => q + i.qty, 0), 0);
+    return `
+      <div class="type-group">
+        <div class="type-header">
+          <span class="type-name">${escapeHtml(type)}</span>
+          <span class="type-count">${groups.length} รายการ · รวม ${totalQty} ชิ้น</span>
+        </div>
+        ${groups.map(g => renderItem(g)).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function photoUrl(photoPath) {
+  if (!photoPath) return '';
+  const filename = photoPath.split('/').pop();
+  const id = photoMap[filename];
+  return id ? `https://lh3.googleusercontent.com/d/${id}=w120` : '';
+}
+
+function renderItem(group) {
+  // aggregate counts by status
+  const counts = { Active: 0, Stock: 0, Finished: 0 };
+  let earliestExpiry = null;
+  const locations = new Set();
+  let photoPath = '';
+  for (const i of group.items) {
+    if (counts[i.status] !== undefined) counts[i.status] += i.qty;
+    else counts.Active += i.qty;
+    if (i.expiryDate && (!earliestExpiry || i.expiryDate < earliestExpiry)) {
+      earliestExpiry = i.expiryDate;
+    }
+    if (i.location) locations.add(i.location);
+    if (!photoPath && i.photo) photoPath = i.photo;
+  }
+
+  const days = daysUntil(earliestExpiry);
+  let expiryClass = '';
+  if (days !== null) {
+    if (days < 30) expiryClass = 'soon';
+    else if (days < 90) expiryClass = 'warn';
+  }
+
+  const pills = [];
+  if (counts.Active) pills.push(`<span class="pill active">${counts.Active} Active</span>`);
+  if (counts.Stock) pills.push(`<span class="pill stock">${counts.Stock} Stock</span>`);
+  if (counts.Finished) pills.push(`<span class="pill finished">${counts.Finished} Finished</span>`);
+
+  const img = photoUrl(photoPath);
+  const imgHtml = img
+    ? `<img class="item-photo" src="${img}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`
+    : `<div class="item-photo"></div>`;
+
+  return `
+    <div class="item" data-key="${escapeHtml(group.key)}">
+      ${imgHtml}
+      <div class="item-main">
+        <div class="item-name">${escapeHtml(group.name)}</div>
+        <div class="count-pills">${pills.join('')}</div>
+      </div>
+      <div class="item-right">
+        ${earliestExpiry ? `<div class="item-expiry ${expiryClass}">${fmtDate(earliestExpiry)}</div>` : ''}
+        ${locations.size ? `<div class="item-loc">${[...locations].map(escapeHtml).join(', ')}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// keep a flat map of key → group for modal lookup
+let lastGroups = {};
+
+function openDetail(key) {
+  const g = lastGroups[key];
+  if (!g) return;
+  const counts = { Active: 0, Stock: 0, Finished: 0 };
+  for (const i of g.items) {
+    if (counts[i.status] !== undefined) counts[i.status] += i.qty;
+  }
+  const summary = Object.entries(counts)
+    .filter(([, n]) => n > 0)
+    .map(([s, n]) => `${n} ${s}`)
+    .join(', ') || '—';
+
+  const sorted = [...g.items].sort((a, b) => {
+    if (a.expiryDate && b.expiryDate) return a.expiryDate - b.expiryDate;
+    if (a.expiryDate) return -1;
+    if (b.expiryDate) return 1;
+    return 0;
+  });
+
+  const sample = g.items[0];
+  const img = photoUrl(sample.photo);
+  const rows = sorted.map(i => {
+    const d = daysUntil(i.expiryDate);
+    let cls = '';
+    if (d !== null) {
+      if (d < 30) cls = 'expiry-soon';
+      else if (d < 90) cls = 'expiry-warn';
+    }
+    return `
+      <tr>
+        <td>${escapeHtml(i.status)}</td>
+        <td>${i.qty} ${escapeHtml(i.unit)}</td>
+        <td class="${cls}">${i.expiryDate ? fmtDate(i.expiryDate) : '—'}</td>
+        <td>${escapeHtml(i.location || '—')}</td>
+        <td>${escapeHtml(i.batch || i.detail || '')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('modal').innerHTML = `
+    <button class="modal-close" id="modal-close-btn" aria-label="ปิด">×</button>
+    <div class="modal-photo-wrap">
+      ${img ? `<img class="modal-photo" src="${img.replace('=w120','=w600')}" referrerpolicy="no-referrer">` : ''}
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <div class="label">Item Name</div>
+        <div class="value">${escapeHtml(sample.name)}</div>
+      </div>
+      <div class="modal-field">
+        <div class="label">Category · Type</div>
+        <div class="value">${escapeHtml(sample.category)} · ${escapeHtml(sample.type || '—')}</div>
+      </div>
+      ${sample.barcode ? `
+      <div class="modal-field">
+        <div class="label">Barcode</div>
+        <div class="value">${escapeHtml(sample.barcode)}</div>
+      </div>` : ''}
+      <div class="modal-field">
+        <div class="label">Summary</div>
+        <div class="value">${escapeHtml(summary)}</div>
+      </div>
+      <div class="modal-divider"></div>
+      <table class="modal-table">
+        <thead><tr><th>Status</th><th>Qty</th><th>Expiry</th><th>Location</th><th>Batch / Detail</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('modal-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modal-close-btn').onclick = closeDetail;
+}
+
+function closeDetail() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderSummary() {
+  const totals = { active: 0, stock: 0, finished: 0, expiringSoon: 0 };
+  for (const r of allRows) {
+    if (r.status === 'Active') totals.active += r.qty;
+    else if (r.status === 'Stock') totals.stock += r.qty;
+    else if (r.status === 'Finished') totals.finished += r.qty;
+    const d = daysUntil(r.expiryDate);
+    if (r.status !== 'Finished' && d !== null && d >= 0 && d < 90) {
+      totals.expiringSoon += r.qty;
+    }
+  }
+  document.getElementById('summary').innerHTML = `
+    <div class="stat ok">
+      <div class="label">Active</div>
+      <div class="value">${totals.active}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Stock</div>
+      <div class="value">${totals.stock}</div>
+    </div>
+    <div class="stat alert">
+      <div class="label">Expiring &lt; 90d</div>
+      <div class="value">${totals.expiringSoon}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Finished</div>
+      <div class="value">${totals.finished}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function rowsFromSheet(values) {
+  if (!values || !values.length) return [];
+  const header = values[0].map(h => String(h).trim());
+  const idx = name => header.indexOf(name);
+  return values.slice(1)
+    .filter(r => r[idx('Item ID')])
+    .map(r => ({
+      id: r[idx('Item ID')] || '',
+      barcode: String(r[idx('Barcode')] || ''),
+      name: r[idx('Item Name')] || '',
+      category: r[idx('Category')] || '',
+      type: r[idx('Type')] || '',
+      qty: parseInt(r[idx('Qty')]) || 0,
+      unit: r[idx('Unit')] || '',
+      status: r[idx('Status')] || '',
+      expiryRaw: String(r[idx('Expiry Date')] || ''),
+      expiryDate: parseExpiry(String(r[idx('Expiry Date')] || '')),
+      photo: r[idx('Photo')] || '',
+      price: r[idx('Price')] || '',
+      location: r[idx('Location')] || '',
+      batch: String(r[idx('Batch Code')] || ''),
+      detail: r[idx('Detail')] || '',
+    }));
+}
+
+async function loadPhotoMap() {
+  // cache for the session — folder rarely changes during a viewing
+  try {
+    const cached = sessionStorage.getItem(PHOTO_MAP_CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch {}
+  try {
+    const files = await MeNoteAuth.fetchDriveFolderFiles(PHOTO_FOLDER_ID);
+    const map = {};
+    for (const f of files) map[f.name] = f.id;
+    if (Object.keys(map).length) {
+      try { sessionStorage.setItem(PHOTO_MAP_CACHE_KEY, JSON.stringify(map)); } catch {}
+    }
+    console.log(`Loaded ${Object.keys(map).length} photos from Drive folder`);
+    return map;
+  } catch (e) {
+    console.warn('Photo folder fetch failed (token may need re-auth for Drive scope):', e);
+    // wipe stored token so next reload re-prompts with new scope
+    MeNoteAuth.signOut();
+    return {};
+  }
+}
+
+function handleData(data) {
+  // pick first sheet that has Item ID header
+  let values = null;
+  for (const name of Object.keys(data)) {
+    const v = data[name];
+    if (v && v.length && v[0].includes('Item ID')) { values = v; break; }
+  }
+  if (!values) {
+    const content = document.getElementById('content');
+    content.className = 'error';
+    content.textContent = 'ไม่เจอแท็บที่มีคอลัมน์ "Item ID" ในชีท';
+    return;
+  }
+  allRows = rowsFromSheet(values);
+
+  // populate location filter
+  const locs = [...new Set(allRows.map(r => r.location).filter(Boolean))].sort();
+  const locSel = document.getElementById('location-filter');
+  locSel.innerHTML = '<option value="">All locations</option>';
+  for (const l of locs) {
+    const o = document.createElement('option');
+    o.value = l; o.textContent = l;
+    locSel.appendChild(o);
+  }
+
+  renderSummary();
+  render();
+
+  // fetch photos in background; re-render when ready
+  loadPhotoMap().then(map => {
+    photoMap = map;
+    render();
+  });
+}
+
+function load() {
+  const content = document.getElementById('content');
+  MeNoteAuth.loadAllSheets(SHEET_ID, content, handleData);
+}
+
+// events
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentCat = t.dataset.cat;
+    render();
+  });
+});
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('status-filter').addEventListener('change', render);
+document.getElementById('location-filter').addEventListener('change', render);
+
+// open detail on item click (delegated)
+document.getElementById('content').addEventListener('click', e => {
+  const item = e.target.closest('.item');
+  if (item && item.dataset.key) openDetail(item.dataset.key);
+});
+// close modal on backdrop click or Esc
+document.getElementById('modal-backdrop').addEventListener('click', e => {
+  if (e.target.id === 'modal-backdrop') closeDetail();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+load();
+</script>
+</body>
+</html>

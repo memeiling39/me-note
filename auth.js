@@ -3,7 +3,7 @@
 
 (function () {
   const CLIENT_ID = '228482250401-1v59etll53j26q1qqrif95ei3g4lvkco.apps.googleusercontent.com';
-  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.metadata.readonly';
   const TOKEN_KEY = 'me-note-token';
 
   let tokenClient = null;
@@ -130,9 +130,26 @@
     }
   }
 
+  async function fetchDriveFolderFiles(folderId) {
+    const token = await getToken();
+    const files = [];
+    let pageToken = '';
+    do {
+      const url = `https://www.googleapis.com/drive/v3/files?` +
+        `q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}` +
+        `&fields=nextPageToken,files(id,name)&pageSize=1000` +
+        (pageToken ? `&pageToken=${pageToken}` : '');
+      const data = await apiGet(url, token);
+      files.push(...(data.files || []));
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
+    return files;
+  }
+
   window.MeNoteAuth = {
     getToken,
     fetchAllSheets,
+    fetchDriveFolderFiles,
     loadAllSheets,
     signOut: () => sessionStorage.removeItem(TOKEN_KEY),
   };

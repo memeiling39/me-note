@@ -558,7 +558,7 @@ function buildWorkbook(data) {
 }
 
 const upload = document.getElementById('upload-screen');
-upload.innerHTML = `<div style="text-align:center;color:var(--me-muted);font-family:'BoonJot',sans-serif"><div style="font-size:2rem;margin-bottom:1rem">📊</div><div>กำลังโหลดข้อมูลจาก Google Sheet…</div></div>`;
+upload.innerHTML = `<div style="text-align:center;color:var(--me-muted);font-family:'BoonJot',sans-serif"><div style="font-size:2rem;margin-bottom:1rem">🗒️</div><div>กำลังโหลดข้อมูลจาก Google Sheet…</div></div>`;
 
 MeNoteAuth.loadAllSheets(SHEET_ID, upload, (data) => {
   try {
