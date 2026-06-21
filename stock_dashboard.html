@@ -84,11 +84,11 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .search {
-    flex: 1;
-    min-width: 180px;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 10px 14px;
     border: 1px solid var(--me-border);
     border-radius: var(--me-radius-pill);
@@ -97,6 +97,12 @@
     font-size: 0.9rem;
     color: var(--me-ink);
     outline: none;
+  }
+  .filter-select { flex: 0 0 auto; }
+  @media (max-width: 480px) {
+    .controls { gap: 0.4rem; }
+    .search, .filter-select { font-size: 0.8rem; padding-left: 12px; padding-right: 12px; }
+    .filter-select { padding-right: 28px; background-position: right 10px center; }
   }
   .search:focus { border-color: var(--me-teal); }
   .filter-select {
@@ -139,7 +145,7 @@
   /* item rows (grouped by barcode/name) */
   .item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem 0.5rem;
     border-bottom: 1px solid var(--me-border);
@@ -179,7 +185,7 @@
   }
   .item-expiry {
     font-size: 0.85rem;
-    color: var(--me-ink-soft);
+    color: var(--me-muted);
   }
   .item-expiry.soon { color: var(--me-coral); font-weight: 700; }
   .item-expiry.warn { color: var(--me-orange-ink); font-weight: 500; }
@@ -353,14 +359,18 @@ let allRows = [];
 let photoMap = {};  // filename → file id
 let currentCat = 'เครื่องสำอาง';
 
-// ── parse messy date: "21/5/28", "4/4/2027", "11/22/2025" ──
-function parseExpiry(s) {
-  if (!s) return null;
-  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+// ── parse expiry: Google Sheets serial number, or "21/5/28" / "4/4/2027" ──
+function parseExpiry(v) {
+  if (v === null || v === undefined || v === '') return null;
+  // Sheets UNFORMATTED_VALUE returns dates as serial numbers (days since 1899-12-30)
+  if (typeof v === 'number' && isFinite(v) && v > 1000) {
+    return new Date(Math.round((v - 25569) * 86400 * 1000));
+  }
+  const s = String(v).trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if (!m) return null;
   let [, a, b, y] = m.map(Number);
   if (y < 100) y += 2000;
-  // try dd/mm/yyyy first; if month > 12 it's mm/dd/yyyy
   let day = a, month = b;
   if (month > 12 && day <= 12) { day = b; month = a; }
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
@@ -390,6 +400,7 @@ function render() {
     rows = rows.filter(r => r.category === currentCat);
   }
   if (statusFilter) rows = rows.filter(r => r.status === statusFilter);
+  else rows = rows.filter(r => r.status !== 'Finished');
   if (locFilter) rows = rows.filter(r => r.location === locFilter);
   if (search) {
     rows = rows.filter(r =>
@@ -632,8 +643,8 @@ function rowsFromSheet(values) {
       qty: parseInt(r[idx('Qty')]) || 0,
       unit: r[idx('Unit')] || '',
       status: r[idx('Status')] || '',
-      expiryRaw: String(r[idx('Expiry Date')] || ''),
-      expiryDate: parseExpiry(String(r[idx('Expiry Date')] || '')),
+      expiryRaw: r[idx('Expiry Date')] ?? '',
+      expiryDate: parseExpiry(r[idx('Expiry Date')]),
       photo: r[idx('Photo')] || '',
       price: r[idx('Price')] || '',
       location: r[idx('Location')] || '',
