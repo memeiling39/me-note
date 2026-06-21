@@ -60,24 +60,25 @@ body.me-themed {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 1rem 1.25rem 0;
-  padding: 6px 14px;
+  margin: calc(env(safe-area-inset-top, 0px) + 1rem) 1.25rem 0;
+  padding: 8px 16px;
   background: var(--me-surface);
   border: 1px solid var(--me-border);
   border-radius: var(--me-radius-pill);
   color: var(--me-muted);
   text-decoration: none;
   font-family: 'BoonJot', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 400;
   transition: all 0.2s ease;
   box-shadow: var(--me-shadow);
+  -webkit-tap-highlight-color: transparent;
 }
-.me-back:hover {
+.me-back:hover, .me-back:active {
   color: var(--me-coral);
   border-color: var(--me-coral);
-  transform: translateX(-2px);
 }
+.me-back:hover { transform: translateX(-2px); }
 
 /* card surface */
 .me-card {

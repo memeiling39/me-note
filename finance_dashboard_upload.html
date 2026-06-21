@@ -43,11 +43,11 @@ body{font-family:'BoonJot',system-ui,sans-serif;background:var(--me-cream,#FBF5E
 /* cards */
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:680px){.cards{grid-template-columns:repeat(2,1fr)}}
-.card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid transparent}
+.card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid transparent;min-width:0}
 .card.blue{border-color:var(--blue)}.card.red{border-color:var(--red)}
 .card.green{border-color:var(--green)}.card.amber{border-color:var(--amber)}
 .card .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#64748B;margin-bottom:5px}
-.card .val{font-size:1.35rem;font-weight:700}
+.card .val{font-size:1.35rem;font-weight:700;word-break:break-all}
 .card.blue .val{color:var(--blue)}.card.red .val{color:var(--red)}
 .card.green .val{color:var(--green)}.card.amber .val{color:var(--amber)}
 .card .sub{font-size:.72rem;color:#94A3B8;margin-top:3px}
@@ -81,6 +81,23 @@ body{font-family:'BoonJot',system-ui,sans-serif;background:var(--me-cream,#FBF5E
 
 #dashboard{display:none}
 #error-box{background:#FFF1F2;border:1px solid #FECDD3;border-radius:8px;padding:12px 16px;color:#9F1239;font-size:.82rem;margin-bottom:16px;display:none}
+
+/* ── mobile ── */
+@media (max-width:480px){
+  .wrap{padding:8px 10px}
+  .hdr{flex-direction:column;align-items:flex-start;gap:6px}
+  .hdr h1{font-size:1.1rem}
+  .cards{gap:8px}
+  .card{padding:12px 12px}
+  .card .val{font-size:1.1rem}
+  .card .lbl{font-size:.62rem}
+  .card .sub{font-size:.65rem}
+  #info-banner{padding:14px 16px;margin-bottom:18px}
+  .box{padding:12px}
+  .box h3{font-size:.78rem}
+  .row-item .nm,.row-item .am{font-size:.78rem}
+  .btn-sm{padding:5px 10px;font-size:.72rem}
+}
 </style>
 </head>
 <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">

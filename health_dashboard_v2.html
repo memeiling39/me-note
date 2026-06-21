@@ -23,6 +23,9 @@
     max-width: 1200px;
   }
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+  @media (max-width:480px) {
+    body.me-themed { padding: 0 0.75rem 1.5rem; }
+  }
 </style>
 </head>
 <body class="me-themed">
@@ -43,6 +46,11 @@
 .tab-btn.active.warn{background:var(--me-warn-bg);color:var(--me-warn-text);border-color:var(--me-warn-border)}
 .tab-btn.active.alert{background:var(--me-alert-bg);color:var(--me-alert-text);border-color:var(--me-alert-border)}
 .tab-btn.active.low{background:var(--me-warn-bg);color:var(--me-warn-text);border-color:var(--me-warn-border)}
+@media (max-width:480px){
+  .mg{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+  .mc{padding:.75rem}
+  .st{font-size:11px;margin:1.25rem 0 .5rem}
+}
 </style>
 
 <div style="padding:1rem 0">
