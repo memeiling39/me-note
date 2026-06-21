@@ -1,0 +1,114 @@
+/* Me-Note · shared theme · cream + coral + orange + teal */
+
+:root {
+  /* ── palette ──────────────────────────────────────────── */
+  --me-coral:       #E25A53;
+  --me-coral-soft:  #FBE5E3;
+  --me-coral-ink:   #8A2A24;
+
+  --me-orange:      #FDB35D;
+  --me-orange-soft: #FEEFD8;
+  --me-orange-ink:  #8A4A0A;
+
+  --me-cream:       #FBF5E8;
+  --me-cream-deep:  #F4ECD8;
+
+  --me-teal:        #A4D9D6;
+  --me-teal-soft:   #E8F4F3;
+  --me-teal-ink:    #2A6E6A;
+
+  /* ── neutrals ─────────────────────────────────────────── */
+  --me-surface:     #FFFFFF;
+  --me-ink:         #1F1B16;
+  --me-ink-soft:    #4A4338;
+  --me-muted:       #8A7F6E;
+  --me-border:      #ECE4D2;
+
+  /* ── tokens ───────────────────────────────────────────── */
+  --me-radius:      16px;
+  --me-radius-sm:   10px;
+  --me-radius-pill: 999px;
+  --me-shadow:      0 2px 12px rgba(60, 45, 20, 0.05);
+  --me-shadow-hover:0 8px 24px rgba(60, 45, 20, 0.1);
+
+  /* ── semantic ─────────────────────────────────────────── */
+  --me-ok-bg:       var(--me-teal-soft);
+  --me-ok-text:     var(--me-teal-ink);
+  --me-ok-border:   var(--me-teal);
+
+  --me-warn-bg:     var(--me-orange-soft);
+  --me-warn-text:   var(--me-orange-ink);
+  --me-warn-border: var(--me-orange);
+
+  --me-alert-bg:    var(--me-coral-soft);
+  --me-alert-text:  var(--me-coral-ink);
+  --me-alert-border:var(--me-coral);
+}
+
+/* ── base ──────────────────────────────────────────────── */
+body.me-themed {
+  background: var(--me-cream);
+  color: var(--me-ink);
+  font-family: 'BoonJot', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+}
+
+/* ── components ────────────────────────────────────────── */
+
+/* back link (used at top of every sub-page) */
+.me-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1rem 1.25rem 0;
+  padding: 6px 14px;
+  background: var(--me-surface);
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius-pill);
+  color: var(--me-muted);
+  text-decoration: none;
+  font-family: 'BoonJot', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  box-shadow: var(--me-shadow);
+}
+.me-back:hover {
+  color: var(--me-coral);
+  border-color: var(--me-coral);
+  transform: translateX(-2px);
+}
+
+/* card surface */
+.me-card {
+  background: var(--me-surface);
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius);
+  padding: 1.25rem;
+  box-shadow: var(--me-shadow);
+}
+
+/* status badges */
+.me-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--me-radius-pill);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.me-badge.ok    { background: var(--me-ok-bg);    color: var(--me-ok-text); }
+.me-badge.warn  { background: var(--me-warn-bg);  color: var(--me-warn-text); }
+.me-badge.alert { background: var(--me-alert-bg); color: var(--me-alert-text); }
+
+/* section title (small uppercase label above a group) */
+.me-section-title {
+  font-family: 'BoonJot', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--me-muted);
+  margin: 1.75rem 0 0.75rem;
+}

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Finance Dashboard</title>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root{
+  --blue:#5FBFBA;--green:#7FCBC5;--red:#E25A53;--amber:#FDB35D;
+  --indigo:#8A6FAB;--pink:#E89B9B;--orange:#FDB35D;--teal:#A4D9D6;
+  --purple:#B587C9;--slate:#8A7F6E;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'BoonJot',system-ui,sans-serif;background:var(--me-cream,#FBF5E8);color:var(--me-ink,#1F1B16);min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:16px 14px}
+
+/* upload screen */
+#upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:24px;text-align:center}
+#upload-screen h1{font-size:1.6rem;font-weight:700;color:#0F172A}
+#upload-screen p{color:#64748B;font-size:.9rem;max-width:420px;line-height:1.6}
+.upload-box{border:2px dashed var(--me-border,#ECE4D2);border-radius:16px;padding:48px 56px;cursor:pointer;transition:all .2s;background:var(--me-surface,#fff)}
+.upload-box:hover,.upload-box.drag{border-color:var(--me-coral,#E25A53);background:var(--me-coral-soft,#FBE5E3)}
+.upload-box input{display:none}
+.upload-icon{font-size:3rem;margin-bottom:12px}
+.upload-box .u-title{font-size:1rem;font-weight:600;color:#1E293B;margin-bottom:6px}
+.upload-box .u-sub{font-size:.8rem;color:#94A3B8}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s}
+.btn:hover{background:#2563EB}
+.btn-sm{padding:7px 14px;font-size:.78rem;background:#E2E8F0;color:#475569}
+.btn-sm:hover{background:#CBD5E1}
+
+/* header */
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:8px;flex-wrap:wrap}
+.hdr h1{font-size:1.25rem;font-weight:700;color:#0F172A}
+.hdr .sub{font-size:.78rem;color:#64748B;margin-top:2px}
+
+/* banner */
+#info-banner{border-radius:10px;padding:20px 24px;margin-bottom:28px;display:flex;flex-direction:column;gap:12px}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:680px){.cards{grid-template-columns:repeat(2,1fr)}}
+.card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid transparent}
+.card.blue{border-color:var(--blue)}.card.red{border-color:var(--red)}
+.card.green{border-color:var(--green)}.card.amber{border-color:var(--amber)}
+.card .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#64748B;margin-bottom:5px}
+.card .val{font-size:1.35rem;font-weight:700}
+.card.blue .val{color:var(--blue)}.card.red .val{color:var(--red)}
+.card.green .val{color:var(--green)}.card.amber .val{color:var(--amber)}
+.card .sub{font-size:.72rem;color:#94A3B8;margin-top:3px}
+
+/* charts */
+.charts{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:16px}
+@media(max-width:680px){.charts{grid-template-columns:1fr}}
+.box{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.box h3{font-size:.82rem;font-weight:600;color:#374151;margin-bottom:10px}
+.leg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.leg span{font-size:.68rem;color:#475569;display:flex;align-items:center;gap:3px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* bottom */
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:680px){.bottom{grid-template-columns:1fr}}
+.row-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F8FAFC}
+.row-item:last-child{border:none}
+.row-item .nm{font-size:.8rem;color:#475569}
+.row-item .am{font-size:.82rem;font-weight:600;color:#1E293B}
+.am.pos{color:var(--green)}.am.neg{color:var(--red)}.am.warn{color:var(--amber)}
+.divider{border-top:2px solid #E2E8F0;margin:6px 0}
+.bar-bg{height:5px;background:#F1F5F9;border-radius:3px;margin-top:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+
+.tx-highlight{border-radius:6px;padding:8px 10px;margin-top:8px}
+.deduct-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:.78rem;color:#374151}
+.deduct-item .d-bar{flex:1;height:5px;background:#F1F5F9;border-radius:3px;overflow:hidden}
+.deduct-item .d-fill{height:100%;border-radius:3px;background:var(--blue)}
+.deduct-item .d-val{font-size:.75rem;color:#64748B;min-width:70px;text-align:right}
+
+#dashboard{display:none}
+#error-box{background:#FFF1F2;border:1px solid #FECDD3;border-radius:8px;padding:12px 16px;color:#9F1239;font-size:.82rem;margin-bottom:16px;display:none}
+</style>
+</head>
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<body class="me-themed">
+<a href="index.html" class="me-back">← กลับหน้าแรก</a>
+<div class="wrap">
+
+<!-- Upload screen -->
+<div id="upload-screen">
+  <div>
+    <div style="font-size:2.5rem;margin-bottom:8px">💰</div>
+    <h1>Finance Dashboard</h1>
+    <p style="margin-top:8px">อัปโหลดไฟล์ Excel ของคุณเพื่อดูสรุปการเงินส่วนตัว<br>ข้อมูลทั้งหมดประมวลผลในเบราว์เซอร์ ไม่มีการส่งออกไปไหน</p>
+  </div>
+  <label class="upload-box" id="drop-zone">
+    <input type="file" id="file-input" accept=".xlsx,.xlsm">
+    <div class="upload-icon">📂</div>
+    <div class="u-title">คลิกเพื่อเลือกไฟล์ หรือลากมาวาง</div>
+    <div class="u-sub">รองรับไฟล์ .xlsx ที่มี sheet: รายได้, รายจ่ายรายเดือน, ภาษี, เงินเก็บ, การลงทุน</div>
+  </label>
+</div>
+
+<!-- Error -->
+<div id="error-box"></div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="hdr">
+    <div>
+      <h1>💰 Finance Dashboard 2026</h1>
+      <div class="sub" id="hdr-sub"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="font-size:.75rem;color:#94A3B8" id="hdr-date"></div>
+      <button class="btn btn-sm" onclick="resetToUpload()">📂 เปลี่ยนไฟล์</button>
+    </div>
+  </div>
+
+  <div id="info-banner"></div>
+
+  <div class="cards">
+    <div class="card blue">
+      <div class="lbl">รายได้สุทธิ / เดือน</div>
+      <div class="val" id="c-income"></div>
+      <div class="sub" id="c-income-sub"></div>
+    </div>
+    <div class="card red">
+      <div class="lbl">รายจ่าย + ออม / เดือน <span id="c-months-note" style="font-weight:400;font-size:.65rem"></span></div>
+      <div class="val" id="c-outflow"></div>
+      <div class="sub" id="c-outflow-sub"></div>
+    </div>
+    <div class="card green">
+      <div class="lbl">เงินเก็บรวม (ทุกบัญชี)</div>
+      <div class="val" id="c-savings"></div>
+      <div class="sub" id="c-savings-sub"></div>
+    </div>
+    <div class="card amber">
+      <div class="lbl" id="c-tax-lbl">ภาษีปลายปี</div>
+      <div class="val" id="c-tax"></div>
+      <div class="sub" id="c-tax-sub"></div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="box">
+      <h3>รายจ่ายรายเดือน แยกตามหมวด</h3>
+      <div class="leg" id="bar-leg"></div>
+      <div style="position:relative;height:220px"><canvas id="bar-chart"></canvas></div>
+    </div>
+    <div class="box">
+      <h3 id="donut-title">สัดส่วนรายจ่าย</h3>
+      <div style="position:relative;height:220px"><canvas id="donut-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="box">
+      <h3>💼 ทรัพย์สิน</h3>
+      <div class="row-item"><span class="nm">เงินเก็บรวม</span><span class="am pos" id="a-savings"></span></div>
+      <div class="row-item"><span class="nm">พอร์ตหุ้น (มูลค่าตลาด)</span><span class="am pos" id="a-invest"></span></div>
+      <div class="divider"></div>
+      <div class="row-item">
+        <span class="nm" style="font-weight:600">ทรัพย์สินรวม</span>
+        <span class="am pos" style="font-size:.95rem" id="a-total"></span>
+      </div>
+      <div style="margin-top:12px" id="asset-bars"></div>
+      <div style="margin-top:14px;padding:10px;background:#F0FDF4;border-radius:8px" id="efund-box"></div>
+    </div>
+
+    <div class="box">
+      <h3>🧮 สรุปภาษี 2026</h3>
+      <div class="row-item"><span class="nm">รายได้รวมทั้งปี</span><span class="am" id="t-ann"></span></div>
+      <div class="row-item"><span class="nm">ค่าใช้จ่าย (หักได้)</span><span class="am pos" id="t-exp"></span></div>
+      <div class="row-item"><span class="nm">ค่าลดหย่อนรวม</span><span class="am pos" id="t-ded"></span></div>
+      <div class="row-item"><span class="nm">เงินได้สุทธิ</span><span class="am warn" id="t-net"></span></div>
+      <div class="row-item"><span class="nm">ภาษีตามขั้นบันได</span><span class="am neg" id="t-brackets"></span></div>
+      <div class="row-item"><span class="nm">ภาษีถูกหัก ณ ที่จ่าย (WHT)</span><span class="am pos" id="t-wht"></span></div>
+      <div class="divider"></div>
+      <div class="tx-highlight" id="t-highlight">
+        <div class="row-item" style="border:none;padding:0">
+          <span class="nm" id="t-owed-lbl"></span>
+          <span class="am" style="font-size:1rem" id="t-owed"></span>
+        </div>
+        <div style="font-size:.7rem;margin-top:2px" id="t-owed-note"></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:.72rem;color:#64748B;margin-bottom:5px">ค่าลดหย่อนที่ใช้อยู่</div>
+        <div id="deduct-list"></div>
+        <div style="font-size:.72rem;color:#3B82F6;margin-top:8px">💡 ยังเหลือช่องลดหย่อน: RMF/SSF/TESG ลดภาษีได้อีก</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /dashboard -->
+</div><!-- /wrap -->
+
+<script>
+const CATS_LABEL = ['รายจ่ายคงที่','บัตรเครดิต','อาหาร','เดินทาง','ช้อปปิ้ง','บันเทิง','สุขภาพ','อื่นๆ','ออมทรัพย์'];
+const CATS_KEY   = ['fixed','cc','food','travel','shop','entertain','health','other','savings'];
+// palette-aligned: fixed, cc, food, travel, shop, entertain, health, other, savings
+const COLS = ['#5FBFBA','#E25A53','#FDB35D','#A4D9D6','#B587C9','#FFCD8E','#E89B9B','#8A7F6E','#2A6E6A'];
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const fmt = n => '฿' + Math.round(n).toLocaleString('th-TH');
+let barChart, donutChart;
+
+// ── Excel reading helpers ─────────────────────────────────────────────────────
+function cv(ws, addr) { return ws[addr]?.v ?? 0; }
+
+function cellByLabel(ws, label, valueCol='C', maxRows=60) {
+  for (let r = 1; r <= maxRows; r++) {
+    const cell = ws[`A${r}`];
+    if (cell && String(cell.v).includes(label)) {
+      return ws[`${valueCol}${r}`]?.v ?? 0;
+    }
+  }
+  return 0;
+}
+
+function parseExcel(wb) {
+  // ── รายได้ ──────────────────────────────────────────────────────────────────
+  const ri = wb.Sheets['รายได้'];
+  if (!ri) throw new Error('ไม่พบ sheet "รายได้" — กรุณาตรวจสอบชื่อ sheet');
+  const monthly_net  = +cv(ri,'C5') || 0;
+  const bonus_per    = +cv(ri,'C18') || 0;
+  const bonus_count  = +cv(ri,'B18') || 0;
+  const wht_annual   = +cellByLabel(ri,'WHT รวมทั้งปี','D',20) || 0;
+
+  // ── รายจ่ายรายเดือน ─────────────────────────────────────────────────────────
+  const rm = wb.Sheets['รายจ่ายรายเดือน'];
+  if (!rm) throw new Error('ไม่พบ sheet "รายจ่ายรายเดือน"');
+  const cats = Object.fromEntries(CATS_KEY.map(k=>[k,[]]));
+  const totals = [];
+  for (let r = 5; r <= 16; r++) {
+    CATS_KEY.forEach((k,i) => {
+      cats[k].push(+(rm[XLSX.utils.encode_cell({r:r-1,c:i+1})]?.v) || 0);
+    });
+    totals.push(+(rm[XLSX.utils.encode_cell({r:r-1,c:10})]?.v) || 0);
+  }
+
+  // ── ภาษี ─────────────────────────────────────────────────────────────────────
+  const tx = wb.Sheets['ภาษี'];
+  if (!tx) throw new Error('ไม่พบ sheet "ภาษี"');
+  const ann_income   = +cellByLabel(tx,'รายได้รวมทั้งปี') || 0;
+  const exp_deduct   = +cellByLabel(tx,'รวมค่าใช้จ่าย') || 0;
+  const tot_deduct   = +cellByLabel(tx,'รวมค่าลดหย่อน') || 0;
+  const net_income   = +cellByLabel(tx,'เงินได้สุทธิ') || 0;
+  const tax_brackets = +cellByLabel(tx,'ภาษีตามขั้นบันได') || 0;
+  const net_tax      = +cellByLabel(tx,'ภาษีที่ต้องจ่าย') || 0;
+
+  // deductions breakdown
+  const deduct_items = [];
+  let inSection = false;
+  for (let r = 1; r <= 60; r++) {
+    const aCell = tx[`A${r}`];
+    const cCell = tx[`C${r}`];
+    const label = aCell ? String(aCell.v).trim() : '';
+    if (label === 'ค่าลดหย่อน' && !cCell) { inSection = true; continue; }
+    if (inSection) {
+      if (label.includes('รวมค่าลดหย่อน')) break;
+      const val = cCell?.v;
+      if (val && +val > 0) deduct_items.push({label, value: +val});
+    }
+  }
+
+  // ── เงินเก็บ ──────────────────────────────────────────────────────────────
+  const sg = wb.Sheets['เงินเก็บ'];
+  let savings_total = 0;
+  if (sg) {
+    for (let r = 4; r <= 12; r++) {
+      savings_total += +(sg[`D${r}`]?.v) || 0;
+    }
+  }
+
+  // ── การลงทุน ──────────────────────────────────────────────────────────────
+  const inv = wb.Sheets['การลงทุน'];
+  const invest_total = inv ? (+(inv['F20']?.v) || 0) : 0;
+
+  // ── คำนวณ ─────────────────────────────────────────────────────────────────
+  const nonSavKeys = ['fixed','cc','food','travel','shop','entertain','health','other'];
+  const dataIdx = [];
+  for (let i = 0; i < 12; i++) {
+    if (nonSavKeys.some(k => cats[k][i] > cats['fixed'][i])) dataIdx.push(i);
+  }
+  const n = dataIdx.length || 1;
+  const avg_expense = dataIdx.reduce((s,i) =>
+    s + nonSavKeys.reduce((a,k) => a + cats[k][i], 0), 0) / n;
+  const avg_savings = dataIdx.reduce((s,i) => s + cats.savings[i], 0) / n;
+
+  return {
+    income: monthly_net, bonus_per, bonus_count,
+    bonus_months: [2,5,8,11],
+    bonus_month_income: monthly_net + bonus_per,
+    avg_expense: Math.round(avg_expense*100)/100,
+    avg_savings: Math.round(avg_savings*100)/100,
+    avg_total_outflow: Math.round((avg_expense+avg_savings)*100)/100,
+    surplus: Math.round((monthly_net - avg_expense - avg_savings)*100)/100,
+    savings: Math.round(savings_total*100)/100,
+    invest: Math.round(invest_total*100)/100,
+    assets: Math.round((savings_total+invest_total)*100)/100,
+    ann_income, exp_deduct, tot_deduct,
+    net_income: Math.round(net_income*100)/100,
+    tax_brackets: Math.round(tax_brackets*100)/100,
+    net_tax: Math.round(net_tax*100)/100,
+    wht_paid: Math.round(wht_annual*100)/100,
+    n_data_months: n, deduct_items, cats, totals,
+  };
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderDashboard(D, filename) {
+  // banner
+  const banner = document.getElementById('info-banner');
+  if (D.surplus >= 0) {
+    banner.style.background='var(--me-ok-bg)'; banner.style.border='1px solid var(--me-ok-border)'; banner.style.color='var(--me-ok-text)';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.88rem">
+        <span>✅</span> รายรับครอบคลุมรายจ่ายทุกเดือน
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:24px;font-size:.78rem;color:var(--me-ok-text);opacity:.85">
+        <span>🎁 เดือนโบนัส (มี.ค. มิ.ย. ก.ย. ธ.ค.) &nbsp;รายได้รวม <strong>${fmt(D.bonus_month_income)}</strong></span>
+        <span>💰 เฉลี่ยเหลือ <strong>${fmt(D.surplus)}/เดือน</strong> (ไม่รวมโบนัส)</span>
+      </div>`;
+  } else {
+    banner.style.background='var(--me-alert-bg)'; banner.style.border='1px solid var(--me-alert-border)'; banner.style.color='var(--me-alert-text)';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.88rem">
+        <span>⚠️</span> รายจ่ายเฉลี่ยเกินรายได้ปกติ ${fmt(-D.surplus)}/เดือน
+      </div>
+      <div style="font-size:.78rem;color:var(--me-alert-text);opacity:.85">ตรวจสอบรายการในชีตบัตรเครดิตด้วยนะคะ</div>`;
+  }
+
+  // header
+  document.getElementById('hdr-sub').textContent =
+    `${filename} · มีข้อมูล ${D.n_data_months} เดือน (ม.ค.–${MONTHS[D.n_data_months-1]})`;
+  document.getElementById('hdr-date').textContent =
+    new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+
+  // cards
+  document.getElementById('c-income').textContent = fmt(D.income);
+  document.getElementById('c-income-sub').textContent =
+    `ทั้งปี ${fmt(D.ann_income)} (รวมโบนัส ${D.bonus_count} ครั้ง)`;
+  document.getElementById('c-months-note').textContent = `(เฉลี่ย ${D.n_data_months} เดือน)`;
+  document.getElementById('c-outflow').textContent = fmt(D.avg_total_outflow);
+  document.getElementById('c-outflow-sub').textContent =
+    `รายจ่าย ${fmt(D.avg_expense)} + ออม ${fmt(D.avg_savings)}`;
+  document.getElementById('c-savings').textContent = fmt(D.savings);
+  document.getElementById('c-savings-sub').textContent =
+    `+ หุ้น ${fmt(D.invest)} · รวม ${fmt(D.assets)}`;
+
+  const taxDue = D.net_tax;
+  if (taxDue > 0) {
+    document.getElementById('c-tax-lbl').textContent = 'ภาษีที่ต้องจ่ายเพิ่ม';
+    document.getElementById('c-tax').textContent = fmt(taxDue);
+    document.getElementById('c-tax').style.color = 'var(--amber)';
+    document.getElementById('c-tax-sub').textContent =
+      `ภาษีจริง ${fmt(D.tax_brackets)} − WHT ${fmt(D.wht_paid)}`;
+  } else {
+    document.getElementById('c-tax-lbl').textContent = 'คาดได้คืนภาษี';
+    document.getElementById('c-tax').textContent = fmt(-taxDue);
+    document.getElementById('c-tax').style.color = 'var(--green)';
+    document.getElementById('c-tax-sub').textContent =
+      `WHT ${fmt(D.wht_paid)} > ภาษีจริง ${fmt(D.tax_brackets)}`;
+  }
+
+  // bar chart
+  const incomeLineData = MONTHS.map((_,i) =>
+    D.bonus_months.includes(i) ? D.bonus_month_income : D.income);
+  const catData = CATS_KEY.map(k => D.cats[k]);
+
+  document.getElementById('bar-leg').innerHTML =
+    CATS_LABEL.map((k,i)=>`<span><span class="dot" style="background:${COLS[i]}"></span>${k}</span>`).join('') +
+    `<span><span class="dot" style="background:#3B82F6;border-radius:2px"></span>รายได้</span>`;
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('bar-chart').getContext('2d'), {
+    type:'bar',
+    data:{
+      labels: MONTHS,
+      datasets:[
+        ...CATS_LABEL.map((k,i)=>({
+          type:'bar', label:k, data:catData[i],
+          backgroundColor:COLS[i]+'CC', borderRadius:2, borderSkipped:false, stack:'expenses'
+        })),
+        {type:'line', label:'รายได้', data:incomeLineData,
+          borderColor:'#8A2A24', borderWidth:2, borderDash:[5,3],
+          pointRadius:3, pointBackgroundColor:'#8A2A24', fill:false, stack:undefined, tension:0}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},
+        y:{stacked:true,grid:{color:'#F1F5F9'},
+          ticks:{font:{size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}}
+      }
+    }
+  });
+
+  // donut
+  const dataIdx = Array.from({length:D.n_data_months},(_,i)=>i);
+  const avgIdx = arr => dataIdx.reduce((s,i)=>s+arr[i],0)/dataIdx.length;
+  const donutVals = catData.map(avgIdx).map(Math.round);
+  const donutFiltered = CATS_LABEL.map((k,i)=>({k,v:donutVals[i],c:COLS[i]})).filter(x=>x.v>0);
+  document.getElementById('donut-title').textContent = `สัดส่วนรายจ่าย (เฉลี่ย ${D.n_data_months} เดือน)`;
+
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donut-chart').getContext('2d'), {
+    type:'doughnut',
+    data:{labels:donutFiltered.map(x=>x.k),
+      datasets:[{data:donutFiltered.map(x=>x.v),
+        backgroundColor:donutFiltered.map(x=>x.c+'DD'),borderWidth:1,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{
+        legend:{position:'right',labels:{font:{size:10},boxWidth:10,padding:6}},
+        tooltip:{callbacks:{label:c=>{
+          const t=c.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${c.label}: ${fmt(c.raw)} (${((c.raw/t)*100).toFixed(0)}%)`;
+        }}}
+      }
+    }
+  });
+
+  // assets
+  document.getElementById('a-savings').textContent = fmt(D.savings);
+  document.getElementById('a-invest').textContent  = fmt(D.invest);
+  document.getElementById('a-total').textContent   = fmt(D.assets);
+  const savPct = (D.savings/D.assets*100).toFixed(1);
+  const invPct = (D.invest/D.assets*100).toFixed(1);
+  document.getElementById('asset-bars').innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#64748B;margin-bottom:3px">
+      <span>🏦 เงินเก็บ</span><span>${savPct}%</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${savPct}%;background:var(--green)"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#64748B;margin-top:7px;margin-bottom:3px">
+      <span>📈 หุ้น</span><span>${invPct}%</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.max(+invPct,0.5)}%;background:var(--blue)"></div></div>`;
+  const efundMonths = (D.savings/D.avg_expense).toFixed(1);
+  document.getElementById('efund-box').innerHTML = `
+    <div style="font-size:.72rem;color:#166534;font-weight:600">🎯 Emergency Fund</div>
+    <div style="font-size:.75rem;color:#15803D;margin-top:2px">เงินเก็บ = ${efundMonths} เดือนของรายจ่าย ✓</div>`;
+
+  // tax
+  document.getElementById('t-ann').textContent      = fmt(D.ann_income);
+  document.getElementById('t-exp').textContent      = fmt(D.exp_deduct);
+  document.getElementById('t-ded').textContent      = fmt(D.tot_deduct);
+  document.getElementById('t-net').textContent      = fmt(D.net_income);
+  document.getElementById('t-brackets').textContent = fmt(D.tax_brackets);
+  document.getElementById('t-wht').textContent      = fmt(D.wht_paid);
+
+  const hl = document.getElementById('t-highlight');
+  const owed = document.getElementById('t-owed');
+  if (taxDue > 0) {
+    hl.style.background='#FFF7ED';
+    document.getElementById('t-owed-lbl').style.color='#92400E';
+    document.getElementById('t-owed-lbl').textContent='ภาษีที่ต้องจ่ายเพิ่ม';
+    owed.textContent=fmt(taxDue); owed.style.color='var(--amber)';
+    document.getElementById('t-owed-note').style.color='#92400E';
+    document.getElementById('t-owed-note').textContent='ยื่นภาษีปลายปีแล้วจ่ายส่วนต่างนี้';
+  } else {
+    hl.style.background='#F0FDF4';
+    document.getElementById('t-owed-lbl').style.color='#166534';
+    document.getElementById('t-owed-lbl').textContent='คาดได้คืนภาษี';
+    owed.textContent=fmt(-taxDue); owed.style.color='var(--green)';
+    document.getElementById('t-owed-note').style.color='#166534';
+    document.getElementById('t-owed-note').textContent='WHT เกินกว่าภาษีจริง → ยื่นขอคืนได้';
+  }
+
+  const maxD = Math.max(...D.deduct_items.map(x=>x.value), 1);
+  document.getElementById('deduct-list').innerHTML = D.deduct_items.map(item=>`
+    <div class="deduct-item">
+      <span style="min-width:120px;font-size:.73rem">${item.label}</span>
+      <div class="d-bar"><div class="d-fill" style="width:${(item.value/maxD*100).toFixed(0)}%"></div></div>
+      <span class="d-val">${fmt(item.value)}</span>
+    </div>`).join('');
+
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+  const eb = document.getElementById('error-box');
+  eb.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const D = parseExcel(wb);
+      renderDashboard(D, file.name);
+    } catch(err) {
+      eb.style.display = 'block';
+      eb.textContent = '❌ ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function resetToUpload() {
+  document.getElementById('upload-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+// file input
+document.getElementById('file-input').addEventListener('change', e => {
+  handleFile(e.target.files[0]);
+});
+
+// drag & drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+// ── Auto-load from private Google Sheet via Apps Script Web App ──────────────
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbyW_ekMQo0y-sQZ7mmCoceguRCEP5Oj1mDsLVN9fG9pz0xECdE483AJlgA-3X_Wt_ueaw/exec';
+
+// Build a fake SheetJS workbook from { sheetName: [[row],...] } so the existing
+// cell-address parseExcel logic can work unchanged.
+function buildWorkbook(data) {
+  const wb = { Sheets: {}, SheetNames: [] };
+  for (const name in data) {
+    wb.SheetNames.push(name);
+    const sheet = {};
+    data[name].forEach((row, r) => {
+      row.forEach((val, c) => {
+        if (val === '' || val == null) return;
+        const addr = XLSX.utils.encode_cell({ r, c });
+        sheet[addr] = { v: val, t: typeof val === 'number' ? 'n' : 's' };
+      });
+    });
+    wb.Sheets[name] = sheet;
+  }
+  return wb;
+}
+
+const upload = document.getElementById('upload-screen');
+const uploadOrig = upload.innerHTML;
+upload.innerHTML = `<div style="text-align:center;color:var(--me-muted);font-family:'BoonJot',sans-serif"><div style="font-size:2rem;margin-bottom:1rem">📊</div><div>กำลังโหลดข้อมูลจาก Google Sheet…</div></div>`;
+
+window.__financeCB = function(data) {
+  try {
+    const wb = buildWorkbook(data);
+    const D = parseExcel(wb);
+    renderDashboard(D, 'Google Sheet');
+  } catch (err) {
+    showFallback('ประมวลผลข้อมูลล้มเหลว: ' + err.message);
+  }
+};
+
+function showFallback(msg) {
+  upload.innerHTML = uploadOrig;
+  const eb = document.getElementById('error-box');
+  eb.style.display = 'block';
+  eb.innerHTML = `⚠️ ${msg}<br><span style="font-size:.8rem;font-weight:400">ตรวจสอบว่า login Google ด้วยบัญชีเจ้าของ Apps Script — หรือลากไฟล์ .xlsx มาที่นี่ได้</span>`;
+  document.getElementById('file-input').addEventListener('change', e => handleFile(e.target.files[0]));
+  const dz2 = document.getElementById('drop-zone');
+  dz2.addEventListener('dragover', e => { e.preventDefault(); dz2.classList.add('drag'); });
+  dz2.addEventListener('dragleave', () => dz2.classList.remove('drag'));
+  dz2.addEventListener('drop', e => { e.preventDefault(); dz2.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+}
+
+const s = document.createElement('script');
+s.src = `${SHEET_API}?callback=__financeCB`;
+s.onerror = () => showFallback('โหลดข้อมูลไม่สำเร็จ');
+document.head.appendChild(s);
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Me-Note</title>
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    padding: 2rem 1.25rem 3rem;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  header {
+    text-align: center;
+    padding: 3rem 1rem 2.5rem;
+    position: relative;
+  }
+  .header-bg {
+    position: absolute;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    width: 260px; height: 220px;
+    background: radial-gradient(circle at 30% 50%, var(--me-coral) 0%, transparent 60%),
+                radial-gradient(circle at 70% 50%, var(--me-teal) 0%, transparent 60%);
+    opacity: 0.28;
+    filter: blur(28px);
+    z-index: 0;
+  }
+  header > * { position: relative; z-index: 1; }
+
+  .badge {
+    display: inline-block;
+    font-family: 'BoonJot', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--me-muted);
+    margin-bottom: 1.25rem;
+  }
+  .badge::before { content: '◆  '; color: var(--me-coral); }
+  .badge::after  { content: '  ◆'; color: var(--me-teal); }
+
+  h1 {
+    font-family: 'BoonJot', sans-serif;
+    font-size: clamp(2.75rem, 7vw, 4rem);
+    font-weight: 700;
+    color: var(--me-ink);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  h1 span {
+    color: var(--me-coral);
+    font-style: italic;
+  }
+  .tagline {
+    color: var(--me-muted);
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 420px;
+    margin: 0.5rem auto 0;
+    line-height: 1.7;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+  .card {
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius);
+    padding: 1.75rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--me-shadow);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--me-shadow-hover);
+    border-color: var(--accent);
+  }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .card h2 {
+    font-family: 'BoonJot', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--me-ink);
+  }
+  .card p {
+    color: var(--me-muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    flex: 1;
+    font-weight: 300;
+  }
+  .arrow {
+    color: var(--accent);
+    font-family: 'BoonJot', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+  .c-finance { --accent: var(--me-teal-ink);  --accent-soft: var(--me-teal-soft); }
+  .c-health  { --accent: var(--me-coral);     --accent-soft: var(--me-coral-soft); }
+  .c-jay     { --accent: var(--me-orange-ink);--accent-soft: var(--me-orange-soft); }
+
+  footer {
+    text-align: center;
+    padding: 3rem 1rem 1rem;
+    color: var(--me-muted);
+    font-family: 'BoonJot', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body class="me-themed">
+  <div class="wrap">
+    <header>
+      <div class="header-bg"></div>
+      <span class="badge">PERSONAL · 2026</span>
+      <h1>Me<span>-</span>Note</h1>
+      <p class="tagline">บันทึก ติดตาม และดูแลตัวเองในที่เดียว</p>
+    </header>
+
+    <div class="grid">
+      <a class="card c-finance" href="finance_dashboard_upload.html">
+        <div class="card-icon">💰</div>
+        <h2>Finance</h2>
+        <p>ภาพรวมการเงินปี 2026 รายรับรายจ่าย และเป้าหมายการออม</p>
+        <span class="arrow">เปิดดู →</span>
+      </a>
+
+      <a class="card c-health" href="health_dashboard_v2.html">
+        <div class="card-icon">🩺</div>
+        <h2>Health</h2>
+        <p>ผลตรวจสุขภาพปี 2026 เทียบค่าเฉลี่ย พร้อมกราฟแนวโน้มแยกหมวด</p>
+        <span class="arrow">เปิดดู →</span>
+      </a>
+
+      <a class="card c-jay" href="jay-survival-guide.html">
+        <div class="card-icon">🥬</div>
+        <h2>เอาชีวิตรอด · กินเจ</h2>
+        <p>ของต้องมีทุกมื้อ จัดตามวิธีทำ กาแฟเจ และลิสต์ซื้อก่อนเทศกาล</p>
+        <span class="arrow">เปิดดู →</span>
+      </a>
+    </div>
+
+    <footer>made with care · meiling</footer>
+  </div>
+</body>
+</html>

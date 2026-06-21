@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คู่มือเอาชีวิตรอด เทศกาลกินเจ</title>
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  :root {
+    /* local aliases mapped to global theme tokens */
+    --cream: var(--me-cream);
+    --warm-white: var(--me-cream-deep);
+    --yellow: var(--me-orange);
+    --yellow-light: var(--me-orange-soft);
+    --yellow-pale: var(--me-orange-soft);
+    --ink: var(--me-ink);
+    --ink-soft: var(--me-ink-soft);
+    --muted: var(--me-muted);
+    --border: var(--me-border);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 1.25rem; }
+
+  /* HERO — cream with soft gradient blur (matches index) */
+  .hero {
+    position: relative;
+    padding: 3.5rem 1.5rem 3rem;
+    text-align: center;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    width: 280px; height: 220px;
+    background: radial-gradient(circle at 30% 50%, var(--me-orange) 0%, transparent 60%),
+                radial-gradient(circle at 70% 50%, var(--me-teal) 0%, transparent 60%);
+    opacity: 0.25;
+    filter: blur(28px);
+    z-index: 0;
+  }
+  .hero > * { position: relative; z-index: 1; }
+  .hero-label {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--me-muted);
+    margin-bottom: 1rem;
+  }
+  .hero-label::before { content: '◆  '; color: var(--me-orange); }
+  .hero-label::after  { content: '  ◆'; color: var(--me-teal); }
+  .hero h1 {
+    font-size: clamp(2.5rem, 7vw, 3.75rem);
+    font-weight: 700;
+    color: var(--me-ink);
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  .hero h1 span { color: var(--me-orange); font-style: italic; }
+  .hero-sub {
+    color: var(--me-muted);
+    font-size: 0.95rem;
+    margin-top: 0.75rem;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--me-orange-soft);
+    color: var(--me-orange-ink);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: var(--me-radius-pill);
+    margin-top: 1.25rem;
+    border: 1px solid var(--me-orange);
+  }
+
+  /* SECTIONS — card surfaces instead of bordered rows */
+  .section {
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius);
+    box-shadow: var(--me-shadow);
+    padding: 1.75rem 1.5rem;
+    margin: 0 0 1rem;
+    animation: fadeIn 0.5s ease both;
+  }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--me-orange-ink);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--me-border);
+  }
+  .section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--me-ink);
+  }
+
+  /* PROTEIN cards */
+  .protein-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+  .protein-card {
+    background: var(--me-cream);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-sm);
+    padding: 14px;
+  }
+  .protein-card .emoji { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+  .protein-card strong { font-size: 13px; font-weight: 700; display: block; margin-bottom: 4px; }
+  .protein-card p { font-size: 11.5px; color: var(--me-muted); line-height: 1.6; }
+
+  /* MEAL TABS — pill style like health tabs */
+  .meal-tabs { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .meal-tab {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: var(--me-radius-pill);
+    border: 1px solid var(--me-border);
+    background: var(--me-surface);
+    color: var(--me-muted);
+    cursor: pointer;
+    transition: all .2s ease;
+    letter-spacing: 0.02em;
+  }
+  .meal-tab:hover { color: var(--me-ink); }
+  .meal-tab.active {
+    background: var(--me-orange-soft);
+    color: var(--me-orange-ink);
+    border-color: var(--me-orange);
+  }
+  .meal-note {
+    font-size: 12.5px;
+    color: var(--me-ink-soft);
+    background: var(--me-orange-soft);
+    border-left: 3px solid var(--me-orange);
+    padding: 10px 14px;
+    border-radius: 0 var(--me-radius-sm) var(--me-radius-sm) 0;
+    margin-bottom: 1rem;
+  }
+
+  /* RECIPE accordion */
+  .recipe-card {
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-sm);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .recipe-header {
+    background: var(--me-orange-soft);
+    padding: 14px 18px;
+    border-bottom: 1px solid transparent;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    user-select: none;
+    transition: background .2s ease;
+  }
+  .recipe-card.open .recipe-header { border-bottom-color: var(--me-border); }
+  .recipe-header:hover { background: var(--me-cream-deep); }
+  .recipe-emoji { font-size: 1.8rem; margin-bottom: 4px; display: block; }
+  .recipe-title { font-size: 1.1rem; font-weight: 700; color: var(--me-ink); }
+  .recipe-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: var(--me-radius-pill);
+    background: var(--me-orange-soft);
+    color: var(--me-orange-ink);
+    border: 1px solid var(--me-orange);
+  }
+  .tag.green { background: var(--me-teal-soft); color: var(--me-teal-ink); border-color: var(--me-teal); }
+  .tag.blue  { background: var(--me-coral-soft); color: var(--me-coral-ink); border-color: var(--me-coral); }
+  .chevron { font-size: 18px; color: var(--me-muted); transition: transform .3s; flex-shrink: 0; margin-top: 4px; }
+  .recipe-card.open .chevron { transform: rotate(180deg); }
+  .recipe-body { display: none; padding: 18px; }
+  .recipe-card.open .recipe-body { display: block; }
+  .ingredients { margin-bottom: 1rem; }
+  .ingredients h4, .steps h4 {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--me-muted);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--me-border);
+    padding-bottom: 6px;
+    font-weight: 500;
+  }
+  .ingredients ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ingredients li { font-size: 12.5px; color: var(--me-ink-soft); display: flex; align-items: flex-start; gap: 6px; }
+  .ingredients li::before { content: '·'; color: var(--me-orange); flex-shrink: 0; font-weight: 700; }
+  .steps ol { list-style: none; counter-reset: step; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    align-items: flex-start;
+    color: var(--me-ink-soft);
+  }
+  .steps li::before {
+    content: counter(step);
+    background: var(--me-orange);
+    color: var(--me-surface);
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .tip-box {
+    background: var(--me-teal-soft);
+    border-left: 3px solid var(--me-teal);
+    padding: 10px 14px;
+    border-radius: 0 var(--me-radius-sm) var(--me-radius-sm) 0;
+    font-size: 12px;
+    color: var(--me-ink-soft);
+    margin-top: 14px;
+  }
+  .tip-box strong { color: var(--me-teal-ink); }
+
+  /* DRINK accordion */
+  .drink-grid { display: grid; gap: 12px; }
+  .drink-card {
+    background: var(--me-surface);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-sm);
+    overflow: hidden;
+  }
+  .drink-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: var(--me-cream);
+    border-bottom: 1px solid transparent;
+    transition: background .2s ease;
+  }
+  .drink-header:hover { background: var(--me-cream-deep); }
+  .drink-card.open .drink-header { border-bottom-color: var(--me-border); }
+  .drink-icon { font-size: 2rem; }
+  .drink-title { font-size: 1rem; font-weight: 700; }
+  .drink-desc { font-size: 11.5px; color: var(--me-muted); margin-top: 2px; }
+  .drink-body { display: none; padding: 16px 18px; }
+  .drink-card.open .drink-body { display: block; }
+  .drink-recipe { font-size: 13px; line-height: 1.9; color: var(--me-ink-soft); }
+  .drink-recipe strong { color: var(--me-ink); }
+
+  /* TIPS */
+  .tip-list { display: grid; gap: 10px; }
+  .tip-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 14px;
+    background: var(--me-cream);
+    border: 1px solid var(--me-border);
+    border-radius: var(--me-radius-sm);
+  }
+  .tip-num {
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--me-coral);
+    color: var(--me-surface);
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .tip-item h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .tip-item p { font-size: 12px; color: var(--me-muted); line-height: 1.7; }
+
+  /* SHOPPING LIST */
+  .shop-list { columns: 2; gap: 12px; }
+  .shop-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; font-size: 13px; break-inside: avoid; }
+  .shop-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--me-orange); flex-shrink: 0; margin-top: 3px; cursor: pointer; }
+  .shop-item label { cursor: pointer; line-height: 1.5; }
+  .shop-item label.checked { text-decoration: line-through; color: var(--me-muted); }
+  .shop-cat {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--me-orange-ink);
+    margin: 16px 0 8px;
+    column-span: all;
+    font-weight: 500;
+  }
+
+  /* FOOTER — cream with subtle border */
+  .footer {
+    border-top: 1px solid var(--me-border);
+    padding: 2rem 1.25rem 1rem;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--me-muted);
+    margin-top: 1rem;
+  }
+  .footer span { color: var(--me-orange-ink); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="me-themed">
+<a href="index.html" class="me-back">← กลับหน้าแรก</a>
+
+<div class="wrap">
+<div class="hero">
+  <div class="hero-label">🟡 เทศกาลกินเจ · survival edition</div>
+  <h1>คู่มือ<br><span>เอาชีวิตรอด</span></h1>
+  <div class="hero-sub">สูตรอาหาร · เครื่องดื่ม · เทคนิคกิน</div>
+  <div class="hero-tag">ไม่มัน · มีสารอาหาร · ทำเองได้จริง</div>
+</div>
+
+<!-- PROTEIN -->
+<div class="section">
+  <div class="section-label">01 — โปรตีนคือหัวใจ</div>
+  <h2>ต้องมีทุกมื้อ ⚡️</h2>
+  <p style="font-size:13px; color:var(--muted); margin-bottom:4px;">เหตุผลที่คนกินเจหิวเร็ว = โปรตีนไม่พอ ให้เลือกอย่างน้อย 1 ชนิดทุกมื้อ</p>
+  <div class="protein-grid">
+    <div class="protein-card"><span class="emoji">🟫</span><strong>เต้าหู้แข็ง / นิ่ม</strong><p>โปรตีนสูง ราคาถูก หาง่ายทุกที่ ปรุงได้หลายแบบ</p></div>
+    <div class="protein-card"><span class="emoji">🍄</span><strong>เห็ดหอม / นางฟ้า</strong><p>ให้ umami เหมือนเนื้อ กินแล้วอิ่มนาน</p></div>
+    <div class="protein-card"><span class="emoji">🟤</span><strong>เทมเป้</strong><p>ถั่วเหลืองหมัก โปรตีนสูงมาก หา Tops / Villa</p></div>
+    <div class="protein-card"><span class="emoji">🫘</span><strong>ถั่วต่างๆ</strong><p>ถั่วแดง ถั่วดำ ถั่วเขียว ใส่ข้าวต้ม / สลัดได้</p></div>
+  </div>
+</div>
+
+<!-- RECIPES -->
+<div class="section">
+  <div class="section-label">02 — สูตรอาหาร</div>
+  <h2>จัดตามวิธีทำ 🍳</h2>
+
+  <div class="meal-tabs">
+    <button class="meal-tab active" onclick="switchMeal('ready',this)">🛒 ซื้อสำเร็จ</button>
+    <button class="meal-tab" onclick="switchMeal('boil',this)">🍲 ต้ม</button>
+    <button class="meal-tab" onclick="switchMeal('stirfry',this)">🍳 ผัด</button>
+    <button class="meal-tab" onclick="switchMeal('steam',this)">🫕 นึ่ง / แช่</button>
+    <button class="meal-tab" onclick="switchMeal('mix',this)">🥗 คลุก / ยำ</button>
+  </div>
+
+  <!-- 🛒 ซื้อสำเร็จ -->
+  <div class="meal-group" id="meal-ready">
+    <div class="meal-note">ไม่ต้องทำอะไรเลย — เปิด เวฟ คลุก กิน วันไหนสมองตายใช้แท็บนี้</div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥣</span><div class="recipe-title">ซีเรียลธัญพืช + นมถั่วเหลือง</div><div class="recipe-meta"><span class="tag">1 นาที</span><span class="tag blue">เปิดกล่องกิน</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>กราโนล่า / ซีเรียลสูตรเจ</li><li>นมถั่วเหลืองน้ำตาลน้อย</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เช็กฉลากซีเรียลว่าไม่มีนม/น้ำผึ้ง</li><li>ใส่ชาม เทนม กินได้เลย</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> กราโนล่า low sugar ดีกว่า ซีเรียลธรรมดามักน้ำตาลสูงมาก</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍞</span><div class="recipe-title">ขนมปังโฮลวีตปาดเนยถั่ว</div><div class="recipe-meta"><span class="tag">2 นาที</span><span class="tag green">ไขมันดี</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ขนมปังโฮลวีต (ไม่มีนม/ไข่/เนย)</li><li>เนยถั่ว 100%</li><li>กล้วย / ผลไม้ (optional)</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เช็กฉลากขนมปังก่อนซื้อ</li><li>ปาดเนยถั่ว วางผลไม้ กินเลยหรือปิ้งก่อนก็ได้</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เนยถั่วที่ดีมีแค่ "ถั่วลิสง" ในส่วนผสม ไม่มีน้ำมันปาล์มหรือน้ำตาล</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🐟</span><div class="recipe-title">ยำทูน่าเจ + ข้าวกล้องเวฟ</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag green">โปรตีนสูง</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ทูน่าเจ Plant-based (กระป๋อง)</li><li>ข้าวกล้องเวฟสำเร็จรูป</li><li>มะนาว · พริกป่น · ซีอิ้วขาวเจ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เวฟข้าวกล้อง เปิดกระป๋องทูน่าสะเด็ดน้ำ</li><li>คลุกทูน่ากับข้าว บีบมะนาว โรยพริกป่น ปรุงรส</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ทูน่าเจหาได้ Tops / Villa / Gourmet ยี่ห้อ Garden Gourmet หรือ VG</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥗</span><div class="recipe-title">สลัดผักเต้าหู้ญี่ปุ่น</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag green">เบาๆ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ผักสลัดกล่องสำเร็จรูป</li><li>เต้าหู้ขาวแข็ง</li><li>น้ำสลัดงาซีอิ้วญี่ปุ่น (สูตรเจ)</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เปิดกล่องผักสลัด ใส่ชาม</li><li>หั่นเต้าหู้ใส่ลงไป ราดน้ำสลัดงา เสิร์ฟเลย</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> Kewpie Roasted Sesame ตรวจส่วนผสมก่อนนะ บางสูตรมีไข่</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🌶️</span><div class="recipe-title">ข้าวไรซ์เบอร์รี่ + น้ำพริกเจ + ผักต้ม</div><div class="recipe-meta"><span class="tag">3 นาที</span><span class="tag green">ไฟเบอร์สูง</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ข้าวกล้อง/ไรซ์เบอร์รี่เวฟ</li><li>น้ำพริกเจ (เห็ดหอม หรือตาแดง)</li><li>ผักต้มสำเร็จ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เวฟข้าว จัดผักต้มใส่จาน</li><li>จิ้มน้ำพริก กินกับข้าว</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> น้ำพริกเจหาได้สะดวกซื้อช่วงเทศกาล หรือที่ Makro ตลอดปี</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍠</span><div class="recipe-title">มันหวานญี่ปุ่นเวฟ + เอดามาเมะ</div><div class="recipe-meta"><span class="tag">10 นาที</span><span class="tag green">คาร์บดี + โปรตีน</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>มันหวานญี่ปุ่น 1 หัว</li><li>เอดามาเมะแช่แข็ง</li><li>เกลือนิดหน่อย</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เวฟมันหวานทั้งหัว 5-7 นาที แทงไม้จิ้มฟันดูว่านิ่มแล้ว</li><li>เวฟเอดามาเมะตามคำแนะนำ โรยเกลือ</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เอดามาเมะ 100g โปรตีนประมาณ 11g หาซื้อแช่แข็งที่ Tops / Lotus</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍲</span><div class="recipe-title">สุกี้เจฉบับไมโครเวฟ</div><div class="recipe-meta"><span class="tag">8 นาที</span><span class="tag blue">ไมโครเวฟ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ชุดผักสุกี้สำเร็จรูป</li><li>วุ้นเส้น 1 ก้อน</li><li>น้ำจิ้มสุกี้เจ · น้ำเปล่า 1/2 ถ้วย</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>แช่วุ้นเส้น 5 นาที ใส่ผัก + วุ้นเส้นในชามไมโครเวฟ เติมน้ำ</li><li>เวฟ 5-6 นาที ราดน้ำจิ้มสุกี้</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> น้ำจิ้มสุกี้เจยี่ห้อ MK มีแบบขวดเล็ก หรือซื้อซองในสะดวกซื้อช่วงเจ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🍲 ต้ม -->
+  <div class="meal-group" id="meal-boil" style="display:none">
+    <div class="meal-note">โยนทุกอย่างลงหม้อ ปิดฝา รอสุก — ไม่มีน้ำมัน ไม่ต้องมีทักษะก็ทำได้</div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍲</span><div class="recipe-title">สุกี้เจรวมมิตร</div><div class="recipe-meta"><span class="tag">15 นาที</span><span class="tag green">ไร้น้ำมัน</span><span class="tag blue">อิ่มและผอม</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>ผักกาดขาว / ผักบุ้ง / แครอท</li><li>เห็ดเข็มทอง 1 ถุง</li><li>เต้าหู้ขาวหรือเต้าหู้หลอดเจ</li><li>วุ้นเส้น 1 ก้อน (แช่ก่อน)</li><li>น้ำจิ้มสุกี้เจ · น้ำเปล่า 2-3 ถ้วย</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ต้มน้ำให้เดือด ใส่ผักแข็ง (แครอท) ก่อน</li><li>ตามด้วยเห็ด เต้าหู้ วุ้นเส้น</li><li>ใส่ผักนิ่ม ปิดฝา รอสุก 3-5 นาที ราดน้ำจิ้ม</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ได้ไฟเบอร์เต็มๆ ไร้น้ำมัน เหมาะมากถ้าอยากกินเจแบบ clean eating</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍜</span><div class="recipe-title">มาม่าหม้อไฟเจสไตล์เกาหลี</div><div class="recipe-meta"><span class="tag">10 นาที</span><span class="tag green">โปรตีนจุกๆ</span><span class="tag blue">ฟีลซีรีส์</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>บะหมี่กึ่งสำเร็จรูปเจ 1 ซอง</li><li>กะหล่ำปลีฉีก 2-3 ใบ</li><li>เห็ดออรินจิ 3-4 ดอก</li><li>เต้าหู้คินุ 1/2 กล่อง</li><li>น้ำเปล่า 300ml</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ต้มน้ำให้เดือด ใส่บะหมี่ + ซองปรุงรส</li><li>ใส่กะหล่ำปลี เห็ด และเต้าหู้คินุก้อนใหญ่ๆ</li><li>รอจนสุก ตักใส่ชาม กินร้อนๆ</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เต้าหู้คินุจะนุ่มละลายในน้ำซุป ได้ฟีลหม้อไฟเกาหลีมาก</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥣</span><div class="recipe-title">ข้าวต้มเห็ดหอมถั่วแดง</div><div class="recipe-meta"><span class="tag">25 นาที</span><span class="tag green">ย่อยง่าย</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>ข้าวสวย 1 ทัพพี</li><li>เห็ดหอมสด 3-4 ดอก</li><li>ถั่วแดงกระป๋อง 2 ช้อนโต๊ะ</li><li>น้ำเปล่า 2 ถ้วย</li><li>ซีอิ้วขาวเจ · ขิงหั่นฝอย · ต้นหอม</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ต้มน้ำ ใส่ขิง ใส่ข้าวสวย กวนให้แตก ลดไฟกลาง</li><li>หั่นเห็ด ใส่ลงพร้อมถั่วแดง ต้มต่อ 10-15 นาที</li><li>ปรุงรส โรยต้นหอม เสิร์ฟร้อนๆ</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ถั่วแดงกระป๋องไม่ต้องแช่ข้ามคืน เปิดใช้ได้เลย</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍵</span><div class="recipe-title">ซุปสาหร่ายวากาเมะเต้าหู้</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag green">เบาท้อง</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>ซุปเจกึ่งสำเร็จรูป (แบบซอง)</li><li>เต้าหู้หลอด / เต้าหู้ไหม</li><li>น้ำร้อน 200ml</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เทซอง ใส่เต้าหู้หั่น</li><li>เทน้ำร้อน คนให้ละลาย ซดร้อนๆ</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ซุปมิโซะเจ + เต้าหู้ก็อร่อยมาก แถมมีโพรไบโอติกส์ด้วย</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍜</span><div class="recipe-title">บะหมี่ผักเห็ดวากาเมะ</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag blue">ชงน้ำร้อน</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>บะหมี่หยกเจ / เส้นหมี่</li><li>เห็ดเข็มทอง 1 ถุง</li><li>สาหร่ายวากาเมะแห้ง 1 ช้อนโต๊ะ · ซีอิ้วขาวเจ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ใส่เส้น เห็ด สาหร่าย ในชามไมโครเวฟ</li><li>เติมน้ำร้อนให้ท่วม เวฟ 3-4 นาที ปรุงรสด้วยซีอิ้ว</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> สาหร่ายวากาเมะแห้งถุง Daiso ราคาถูกมาก มีไอโอดีนด้วย</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🍳 ผัด -->
+  <div class="meal-group" id="meal-stirfry" style="display:none">
+    <div class="meal-note">ไฟแรง มือเร็ว ได้กลิ่นหอมกระทะ — น้ำมันนิดเดียวก็อร่อยได้</div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍜</span><div class="recipe-title">เส้นหมี่ผัดผักใส่เต้าหู้</div><div class="recipe-meta"><span class="tag">20 นาที</span><span class="tag green">ครบทุกกลุ่ม</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>เส้นหมี่แห้ง 80g</li><li>เต้าหู้แข็ง 100g</li><li>ผักตามชอบ (กะหล่ำ แครอท ถั่วงอก)</li><li>ซีอิ้วขาวเจ 1.5 ช้อนโต๊ะ · ซีอิ้วดำ 1/2 ช้อนโต๊ะ · น้ำมัน 1 ช้อนโต๊ะ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>แช่เส้นหมี่ในน้ำเย็น 15 นาที สะเด็ดน้ำ</li><li>ผัดเต้าหู้ (ไม่ใส่น้ำมัน) จนเหลือง ตักออกพัก</li><li>ใส่น้ำมัน ผัดผักแข็งก่อน ตามด้วยผักนิ่ม</li><li>ใส่เส้น ราดซีอิ้ว ผัดให้เข้ากัน ใส่เต้าหู้ คลุกเบาๆ ชิมรส</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> หยดน้ำมันงาตอนสุดท้าย หอมขึ้นเยอะมาก</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🍚</span><div class="recipe-title">ข้าวผัดธัญพืชเต้าหู้</div><div class="recipe-meta"><span class="tag">15 นาที</span><span class="tag green">เคลียร์ของเหลือ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>ข้าวสวย 1 ทัพพี (ข้าวเก่ายิ่งดี)</li><li>เต้าหู้ขาวแข็ง 80g (หั่นลูกเต๋า)</li><li>ผักสามสีแช่แข็ง (ข้าวโพด ถั่วลันเตา แครอท)</li><li>ซีอิ้วขาวเจ 1 ช้อนโต๊ะ · พริกไทยป่น</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>รวนเต้าหู้ในหม้อกับน้ำเปล่านิดหน่อย จนตึงๆ สีเหลืองอ่อน</li><li>ใส่ผักสามสีแช่แข็ง คนให้ทั่ว</li><li>ใส่ข้าวสวย ผัดให้เข้ากัน ปรุงรส ชิมรส</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ผักสามสีแช่แข็งถุงใหญ่ใช้ทีละนิดได้นาน ไม่เสียง่าย</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥬</span><div class="recipe-title">ผัดกะหล่ำซอสเห็ดหอม</div><div class="recipe-meta"><span class="tag">10 นาที</span><span class="tag green">ไม่พึ่งน้ำมัน</span><span class="tag blue">หวานกรอบ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>กะหล่ำปลี 1/4 หัว (ฉีกชิ้นใหญ่)</li><li>ซอสเห็ดหอมเจ 1 ช้อนโต๊ะ · ซีอิ้วขาวเจ 1/2 ช้อนโต๊ะ</li><li>น้ำเปล่า 2-3 ช้อนโต๊ะ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ใส่กะหล่ำในหม้อ เติมน้ำ 2-3 ช้อนโต๊ะ ปิดฝา 3 นาทีจนสลด</li><li>เปิดฝา ปรุงรสด้วยซอสเห็ดหอม + ซีอิ้ว คั่วจนน้ำแห้ง</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> กะหล่ำปลีจะหวานกรอบ ไม่เลี่ยนน้ำมันเลย</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🌶️</span><div class="recipe-title">กะหล่ำคั่วซีอิ๊วหอมพริกแห้ง</div><div class="recipe-meta"><span class="tag">8 นาที</span><span class="tag green">หอมกระทะ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>กะหล่ำปลี (ฉีกชิ้นใหญ่)</li><li>พริกแห้งเม็ดเล็ก 3-4 เม็ด (ทุบ)</li><li>ซีอิ้วขาวเจ 1 ช้อนโต๊ะ · น้ำมันพืช 1 ช้อนชา</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ไฟแรงสุด ใส่น้ำมันจิ๊ดเดียว ผัดพริกแห้งทุบให้หอม (ระวังฉุน!)</li><li>ใส่กะหล่ำ กดให้แนบก้นหม้อ รอรอยเกรียมหอมกระทะ</li><li>เหยาะซีอิ้วรอบขอบหม้อ คั่วไวๆ ปิดไฟ</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เหยาะซีอิ้วรอบขอบหม้อ (ไม่ราดกลาง) หอมขึ้นมาก เทคนิคนี้ใช้กับผัดทุกชนิด</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🫕 นึ่ง/แช่ -->
+  <div class="meal-group" id="meal-steam" style="display:none">
+    <div class="meal-note">ไม่ต้องใช้ไฟเลย หรือแค่นึ่งเบาๆ — สะอาด เบา สารอาหารครบ</div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🟫</span><div class="recipe-title">เต้าหู้นึ่งซอสเจ</div><div class="recipe-meta"><span class="tag">15 นาที</span><span class="tag green">โปรตีนสูง</span><span class="tag blue">ไม่ต้องผัด</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>เต้าหู้นิ่ม 1 กล่อง</li><li>ซีอิ้วขาวเจ 2 ช้อนโต๊ะ</li><li>น้ำมันงา 1 ช้อนชา · น้ำตาล 1/2 ช้อนชา</li><li>ขิงสับ 1 ช้อนชา · ต้นหอม ผักชี</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>คว่ำเต้าหู้ใส่จาน นึ่งในหม้อน้ำเดือด 5 นาที (หรือไมโครเวฟ 2 นาที)</li><li>ผสม ซีอิ้ว + น้ำมันงา + น้ำตาล + ขิง คนให้เข้ากัน</li><li>เทซอสลงบนเต้าหู้ โรยต้นหอม ผักชี</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> ราดน้ำมันร้อนลงบนขิงก่อนเทซอส จะได้ยิน ฉ่า! หอมมากขึ้นเยอะ</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🟫</span><div class="recipe-title">เต้าหู้คินุราดซีอิ๊ว</div><div class="recipe-meta"><span class="tag">3 นาที</span><span class="tag green">โปรตีนสูง</span><span class="tag blue">ไม่ใช้ไฟ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>เต้าหู้ญี่ปุ่นนิ่ม (คินุ) 1 กล่อง</li><li>ซีอิ้วขาวเจ 1 ช้อนโต๊ะ · งาคั่ว</li><li>ข้าวกล้องเซเว่น 1 กล่อง</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>แกะกล่อง เทน้ำออก คว่ำลงจาน</li><li>ราดซีอิ้วขาว โรยงาคั่ว เวฟข้าวกล้อง กินคู่กัน</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เติมขิงหั่นฝอย หอมขึ้นมาก เต้าหู้คินุหาได้ที่ Tops / Fuji / Donki</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥣</span><div class="recipe-title">Overnight Oats</div><div class="recipe-meta"><span class="tag">2 นาที</span><span class="tag blue">แช่ข้ามคืน</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>ข้าวโอ๊ต 4 ช้อนโต๊ะ · นมโอ๊ตเจ 150ml</li><li>กล้วยหอม 1 ลูก · น้ำผึ้ง (optional)</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>ใส่ข้าวโอ๊ต + นมโอ๊ตในโหล คนให้เข้ากัน ปิดฝา แช่ตู้เย็นข้ามคืน</li><li>เช้ามาโปะกล้วยหอมหั่น เติมน้ำผึ้ง กินได้เลย</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เตรียม 3-4 โหลพร้อมกัน เก็บตู้เย็นได้ 3 วัน ประหยัดเวลามาก</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🥗 คลุก/ยำ -->
+  <div class="meal-group" id="meal-mix" style="display:none">
+    <div class="meal-note">ลวกแล้วคลุก หรือคลุกดิบเลย — รสจัด สดชื่น อร่อยมากแต่ทำเร็ว</div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥗</span><div class="recipe-title">ยำวุ้นเส้นเจ</div><div class="recipe-meta"><span class="tag">10 นาที</span><span class="tag green">รสจัด</span><span class="tag blue">ไม่เบื่อ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม (1 คน)</h4><ul><li>วุ้นเส้นแห้ง 50g · เห็ดนางฟ้า 100g</li><li>มะเขือเทศ 3-4 ลูก · หอมแดง 2 หัว (หั่นบาง)</li><li>น้ำมะนาว 2 ช้อนโต๊ะ · ซีอิ้วขาวเจ 1.5 ช้อนโต๊ะ</li><li>น้ำตาล 1 ช้อนชา · พริกแดงสด</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>แช่วุ้นเส้น 10 นาที ลวกในน้ำเดือด 30 วินาที พักให้เย็น</li><li>ลวกเห็ดในน้ำเดือดเดียวกัน 1 นาที</li><li>ผสมน้ำยำ คลุกทุกอย่างเข้ากัน ชิมรส โรยผักชี</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> หมักทิ้ง 15 นาทีก่อนกิน วุ้นเส้นจะดูดซอสหมด อร่อยกว่าเยอะ</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🐟</span><div class="recipe-title">ข้าวกล้องคลุกทูน่าเจ</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag green">โปรตีนสูง</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ทูน่าเจกระป๋อง</li><li>ข้าวกล้องเวฟสำเร็จรูป</li><li>มะนาว · พริกป่น · ซีอิ้วขาวเจ</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เวฟข้าว เปิดกระป๋องทูน่าสะเด็ดน้ำ</li><li>คลุกทูน่ากับข้าว บีบมะนาว โรยพริกป่น ปรุงรสด้วยซีอิ้ว</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> เพิ่มมะเขือเทศหั่นเล็กๆ หรือแตงกวา รสชาติสดขึ้นมาก</div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleCard(this)">
+      <div class="recipe-header"><div><span class="recipe-emoji">🥗</span><div class="recipe-title">สลัดผักเต้าหู้ราดงา</div><div class="recipe-meta"><span class="tag">5 นาที</span><span class="tag green">เบาๆ</span></div></div><div class="chevron">▾</div></div>
+      <div class="recipe-body">
+        <div class="ingredients"><h4>ส่วนผสม</h4><ul><li>ผักสลัดกล่องสำเร็จรูป</li><li>เต้าหู้ขาวแข็ง</li><li>น้ำสลัดงาซีอิ้วญี่ปุ่น (สูตรเจ)</li></ul></div>
+        <div class="steps"><h4>วิธีทำ</h4><ol><li>เปิดกล่องผักสลัด ใส่ชาม</li><li>หั่นเต้าหู้ใส่ลงไป ราดน้ำสลัดงา เสิร์ฟเลย</li></ol></div>
+        <div class="tip-box"><strong>💡 Tip:</strong> Kewpie Roasted Sesame ตรวจส่วนผสมก่อนนะ บางสูตรมีไข่</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRINKS -->
+<div class="section">
+  <div class="section-label">03 — เครื่องดื่ม</div>
+  <h2>กาแฟ & เครื่องดื่มเจ ☕</h2>
+  <div class="drink-grid">
+
+    <div class="drink-card" onclick="toggleCard(this)">
+      <div class="drink-header"><div class="drink-icon">☕</div><div><div class="drink-title">กาแฟเย็นนมโอ๊ต</div><div class="drink-desc">แทนนมวัวได้เลย รสชาติเข้ากันดีมาก</div></div><div class="chevron" style="margin-left:auto">▾</div></div>
+      <div class="drink-body"><div class="drink-recipe"><strong>ส่วนผสม:</strong> กาแฟสด/ดริป 1 ช็อต · นมโอ๊ต · น้ำแข็ง · น้ำตาล (optional)<br><br><strong>วิธี:</strong> ชงกาแฟ รอให้เย็นนิดนึง เทลงแก้วน้ำแข็ง เติมนมโอ๊ตตามชอบ<br><br><strong>💡</strong> Oatly Barista ทำลาเต้อาร์ตได้เลย หาที่ Tops / 7-11 บางสาขา</div></div>
+    </div>
+
+    <div class="drink-card" onclick="toggleCard(this)">
+      <div class="drink-header"><div class="drink-icon">🧋</div><div><div class="drink-title">ชานมนมอัลมอนด์</div><div class="drink-desc">ชาไทย / ชาเขียว + นมพืช</div></div><div class="chevron" style="margin-left:auto">▾</div></div>
+      <div class="drink-body"><div class="drink-recipe"><strong>ส่วนผสม:</strong> ชาไทย / ชาเขียว 1 ถุง · นมอัลมอนด์ไม่หวาน · น้ำแข็ง · น้ำตาล<br><br><strong>วิธี:</strong> ชงชาเข้มๆ รอเย็น เทลงแก้วน้ำแข็ง เติมนมอัลมอนด์<br><br><strong>💡</strong> ชาเขียวมัตฉะ + นมโอ๊ต อร่อยมาก ลองดู</div></div>
+    </div>
+
+    <div class="drink-card" onclick="toggleCard(this)">
+      <div class="drink-header"><div class="drink-icon">🌿</div><div><div class="drink-title">น้ำขิงมะนาวผึ้ง</div><div class="drink-desc">กินเจแล้วท้องอืดบ่อย ดื่มนี้ช่วยได้</div></div><div class="chevron" style="margin-left:auto">▾</div></div>
+      <div class="drink-body"><div class="drink-recipe"><strong>ส่วนผสม:</strong> ขิงสด 3-4 แว่น · มะนาว 1/2 ลูก · น้ำผึ้ง 1 ช้อนโต๊ะ · น้ำร้อน 250ml<br><br><strong>วิธี:</strong> ต้มขิงกับน้ำ 5 นาที กรองกาก บีบมะนาว ใส่น้ำผึ้ง คนให้ละลาย<br><br><strong>💡</strong> ดื่มอุ่นๆ ตอนเช้า ช่วยระบบย่อยอาหารดีมาก โดยเฉพาะช่วงกินเจที่กินผักเยอะ</div></div>
+    </div>
+
+    <div class="drink-card" onclick="toggleCard(this)">
+      <div class="drink-header"><div class="drink-icon">🥛</div><div><div class="drink-title">สมูทตี้กล้วยเต้าหู้</div><div class="drink-desc">อาหารเช้าแบบดื่ม โปรตีนสูง</div></div><div class="chevron" style="margin-left:auto">▾</div></div>
+      <div class="drink-body"><div class="drink-recipe"><strong>ส่วนผสม:</strong> กล้วยหอม 1 ลูก · เต้าหู้ไหม 100g · นมโอ๊ต 200ml · น้ำผึ้ง 1 ช้อนชา · น้ำแข็ง<br><br><strong>วิธี:</strong> ใส่ทุกอย่างในเครื่องปั่น ปั่นจนเนียน เสิร์ฟเลย<br><br><strong>💡</strong> เพิ่มผงโกโก้นิดหน่อยก็อร่อยมาก แถมมีแมกนีเซียมด้วย</div></div>
+    </div>
+
+    <div class="drink-card" onclick="toggleCard(this)">
+      <div class="drink-header"><div class="drink-icon">🍵</div><div><div class="drink-title">Golden Milk (ขมิ้นนม)</div><div class="drink-desc">ต้านอักเสบ ดื่มก่อนนอน</div></div><div class="chevron" style="margin-left:auto">▾</div></div>
+      <div class="drink-body"><div class="drink-recipe"><strong>ส่วนผสม:</strong> ผงขมิ้น 1/2 ช้อนชา · ผงอบเชยนิดหน่อย · นมโอ๊ต 250ml · น้ำผึ้ง<br><br><strong>วิธี:</strong> อุ่นนมในหม้อ (ไม่เดือด) ใส่ขมิ้น + อบเชย คนให้ละลาย ปิดไฟ เติมน้ำผึ้ง<br><br><strong>💡</strong> ใส่พริกไทยดำนิดหน่อยด้วย ช่วยให้ร่างกายดูดซึม curcumin ได้ดีขึ้น</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIPS -->
+<div class="section">
+  <div class="section-label">04 — เทคนิค</div>
+  <h2>ไม่เบื่อ ไม่หิว ไม่ขาดสาร 🧠</h2>
+  <div class="tip-list">
+    <div class="tip-item"><div class="tip-num">1</div><div><h4>กินโปรตีนทุกมื้อ ไม่ใช่แค่ผักผลไม้</h4><p>เต้าหู้ เทมเป้ เห็ด ถั่ว — อย่างน้อย 1 อย่างต้องอยู่ในทุกมื้อ ไม่งั้นหิวในไม่กี่ชั่วโมง</p></div></div>
+    <div class="tip-item"><div class="tip-num">2</div><div><h4>กินไขมันดีให้พอ</h4><p>น้ำมันงา อะโวคาโด ถั่วต่างๆ — ไขมันช่วยให้อิ่มนาน สมองทำงานได้ดี อย่ากลัวมันเกินไป</p></div></div>
+    <div class="tip-item"><div class="tip-num">3</div><div><h4>ระวังกินของทอดเยอะ</h4><p>เต้าหู้ทอด ผัดมัน — หลายคนกินเจแล้วน้ำหนักขึ้นเพราะตรงนี้ สลับนึ่ง/ต้มบ้าง</p></div></div>
+    <div class="tip-item"><div class="tip-num">4</div><div><h4>เสริม B12 และธาตุเหล็ก</h4><p>ขาดได้ง่ายมากในคนกินเจ อาการ: เหนื่อยง่าย ใจสั่น ปวดหัว ถ้ากินเจยาวๆ ควรทานวิตามินเสริม</p></div></div>
+    <div class="tip-item"><div class="tip-num">5</div><div><h4>หลากหลายสีในจาน = หลากหลายสารอาหาร</h4><p>สีส้ม (แครอท ฟักทอง) · สีเขียว (บรอกโคลี ผักบุ้ง) · สีม่วง (มะเขือม่วง) กินสลับกัน</p></div></div>
+    <div class="tip-item"><div class="tip-num">6</div><div><h4>เตรียมของไว้ล่วงหน้า</h4><p>ต้มถั่วแดงทีเดียว 3-4 วัน · แช่แข็งเต้าหู้แบ่งส่วน · หั่นผักเก็บตู้เย็น ชีวิตง่ายขึ้นมาก</p></div></div>
+  </div>
+</div>
+
+<!-- SHOPPING -->
+<div class="section">
+  <div class="section-label">05 — ช็อปปิ้งลิสต์</div>
+  <h2>ซื้ออะไรให้พร้อมก่อนเจ 🛒</h2>
+  <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">กดติ๊กเมื่อซื้อแล้ว</p>
+  <div class="shop-list">
+    <div class="shop-cat">โปรตีน</div>
+    <div class="shop-item"><input type="checkbox" id="s1" onchange="toggleCheck(this)"><label for="s1">เต้าหู้แข็ง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s2" onchange="toggleCheck(this)"><label for="s2">เต้าหู้นิ่ม / คินุ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s3" onchange="toggleCheck(this)"><label for="s3">เทมเป้</label></div>
+    <div class="shop-item"><input type="checkbox" id="s4" onchange="toggleCheck(this)"><label for="s4">ถั่วแดงกระป๋อง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s5" onchange="toggleCheck(this)"><label for="s5">เห็ดหอมสด/แห้ง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s6" onchange="toggleCheck(this)"><label for="s6">เห็ดนางฟ้า</label></div>
+    <div class="shop-item"><input type="checkbox" id="s31" onchange="toggleCheck(this)"><label for="s31">เห็ดออรินจิ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s27" onchange="toggleCheck(this)"><label for="s27">เอดามาเมะแช่แข็ง</label></div>
+
+    <div class="shop-cat">เส้น & แป้ง</div>
+    <div class="shop-item"><input type="checkbox" id="s7" onchange="toggleCheck(this)"><label for="s7">เส้นหมี่</label></div>
+    <div class="shop-item"><input type="checkbox" id="s8" onchange="toggleCheck(this)"><label for="s8">วุ้นเส้น</label></div>
+    <div class="shop-item"><input type="checkbox" id="s9" onchange="toggleCheck(this)"><label for="s9">ข้าวโอ๊ต</label></div>
+    <div class="shop-item"><input type="checkbox" id="s35" onchange="toggleCheck(this)"><label for="s35">บะหมี่กึ่งสำเร็จรูปเจ</label></div>
+
+    <div class="shop-cat">เครื่องปรุงเจ</div>
+    <div class="shop-item"><input type="checkbox" id="s10" onchange="toggleCheck(this)"><label for="s10">ซีอิ้วขาวเจ 🟡</label></div>
+    <div class="shop-item"><input type="checkbox" id="s11" onchange="toggleCheck(this)"><label for="s11">น้ำมันงา</label></div>
+    <div class="shop-item"><input type="checkbox" id="s12" onchange="toggleCheck(this)"><label for="s12">น้ำจิ้มสุกี้เจ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s13" onchange="toggleCheck(this)"><label for="s13">น้ำผึ้ง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s20" onchange="toggleCheck(this)"><label for="s20">น้ำพริกเจ (กระปุก)</label></div>
+    <div class="shop-item"><input type="checkbox" id="s21" onchange="toggleCheck(this)"><label for="s21">เนยถั่ว 100%</label></div>
+    <div class="shop-item"><input type="checkbox" id="s34" onchange="toggleCheck(this)"><label for="s34">ซอสเห็ดหอมเจ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s33" onchange="toggleCheck(this)"><label for="s33">พริกแห้งเม็ดเล็ก</label></div>
+
+    <div class="shop-cat">นมพืช</div>
+    <div class="shop-item"><input type="checkbox" id="s14" onchange="toggleCheck(this)"><label for="s14">นมโอ๊ต (Oatly)</label></div>
+    <div class="shop-item"><input type="checkbox" id="s15" onchange="toggleCheck(this)"><label for="s15">นมอัลมอนด์</label></div>
+    <div class="shop-item"><input type="checkbox" id="snm" onchange="toggleCheck(this)"><label for="snm">นมถั่วเหลือง</label></div>
+
+    <div class="shop-cat">ผัก & ผลไม้</div>
+    <div class="shop-item"><input type="checkbox" id="s16" onchange="toggleCheck(this)"><label for="s16">ขิงสด</label></div>
+    <div class="shop-item"><input type="checkbox" id="s17" onchange="toggleCheck(this)"><label for="s17">มันหวานญี่ปุ่น</label></div>
+    <div class="shop-item"><input type="checkbox" id="s18" onchange="toggleCheck(this)"><label for="s18">กล้วยหอม</label></div>
+    <div class="shop-item"><input type="checkbox" id="s19" onchange="toggleCheck(this)"><label for="s19">มะเขือเทศ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s32" onchange="toggleCheck(this)"><label for="s32">ผักสามสีแช่แข็ง</label></div>
+
+    <div class="shop-cat">สะดวกซื้อ / สำเร็จรูป</div>
+    <div class="shop-item"><input type="checkbox" id="s22" onchange="toggleCheck(this)"><label for="s22">ข้าวกล้องเวฟ (7-11)</label></div>
+    <div class="shop-item"><input type="checkbox" id="s23" onchange="toggleCheck(this)"><label for="s23">ทูน่าเจกระป๋อง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s24" onchange="toggleCheck(this)"><label for="s24">ผักสลัดกล่องสำเร็จ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s25" onchange="toggleCheck(this)"><label for="s25">ซุปเจกึ่งสำเร็จรูป</label></div>
+    <div class="shop-item"><input type="checkbox" id="s26" onchange="toggleCheck(this)"><label for="s26">ชุดผักสุกี้สำเร็จ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s28" onchange="toggleCheck(this)"><label for="s28">สาหร่ายวากาเมะแห้ง</label></div>
+    <div class="shop-item"><input type="checkbox" id="s29" onchange="toggleCheck(this)"><label for="s29">กราโนล่า / ซีเรียลเจ</label></div>
+    <div class="shop-item"><input type="checkbox" id="s30" onchange="toggleCheck(this)"><label for="s30">ขนมปังโฮลวีต (ไม่มีไข่)</label></div>
+  </div>
+</div>
+
+<div class="footer">
+  <div style="font-size:20px; margin-bottom:8px;">🟡</div>
+  <div>กินเจให้มีสุข · <span>somethingtinkle</span></div>
+  <div style="margin-top:4px; opacity:0.5">made with claude · me-imade</div>
+</div>
+</div><!-- /wrap -->
+
+<script>
+  function switchMeal(id, btn) {
+    document.querySelectorAll('.meal-group').forEach(g => g.style.display = 'none');
+    document.querySelectorAll('.meal-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('meal-' + id).style.display = 'block';
+    btn.classList.add('active');
+  }
+  function toggleCard(card) { card.classList.toggle('open'); }
+  function toggleCheck(checkbox) {
+    const label = checkbox.nextElementSibling;
+    checkbox.checked ? label.classList.add('checked') : label.classList.remove('checked');
+  }
+</script>
+</body>
+</html>

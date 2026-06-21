@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Dashboard</title>
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  :root {
+    --color-background-primary: var(--me-surface);
+    --color-background-secondary: var(--me-cream);
+    --color-text-primary: var(--me-ink);
+    --color-text-secondary: var(--me-ink-soft);
+    --color-text-tertiary: var(--me-muted);
+    --color-border-secondary: var(--me-border);
+    --color-border-tertiary: var(--me-border);
+    --border-radius-lg: var(--me-radius);
+  }
+  body.me-themed {
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+    max-width: 1200px;
+  }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+</style>
+</head>
+<body class="me-themed">
+<a href="index.html" class="me-back" style="margin-left:0;margin-top:1.25rem">← กลับหน้าแรก</a>
+<h2 class="sr-only">Dashboard ผลตรวจสุขภาพ แสดงค่าปี 2026 เทียบกับค่าเฉลี่ย และกราฟแนวโน้มแยกตามหมวด</h2>
+
+<style>
+.st{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:1.5rem 0 .6rem;letter-spacing:.03em}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:9px}
+.mc{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:.875rem}
+.bk{font-size:11px;padding:2px 10px;border-radius:999px;font-weight:500;white-space:nowrap}
+.ok{background:var(--me-ok-bg);color:var(--me-ok-text)}
+.hi{background:var(--me-alert-bg);color:var(--me-alert-text)}
+.lo{background:var(--me-warn-bg);color:var(--me-warn-text)}
+.tab-btn{font-size:12px;padding:5px 14px;border-radius:999px;border:1px solid var(--me-border);background:var(--me-surface);color:var(--me-muted);cursor:pointer;font-family:inherit;transition:all .2s ease}
+.tab-btn:hover{color:var(--me-ink)}
+.tab-btn.active{background:var(--me-ok-bg);color:var(--me-ok-text);border-color:var(--me-ok-border)}
+.tab-btn.active.warn{background:var(--me-warn-bg);color:var(--me-warn-text);border-color:var(--me-warn-border)}
+.tab-btn.active.alert{background:var(--me-alert-bg);color:var(--me-alert-text);border-color:var(--me-alert-border)}
+.tab-btn.active.low{background:var(--me-warn-bg);color:var(--me-warn-text);border-color:var(--me-warn-border)}
+</style>
+
+<div style="padding:1rem 0">
+  <div id="hdr"></div>
+  <div id="cards"></div>
+
+  <p class="st" style="margin-top:2rem">กราฟแนวโน้มรายหมวด</p>
+  <div id="tabs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1rem"></div>
+  <div style="position:relative;height:220px"><canvas id="tc" role="img" aria-label="กราฟแนวโน้มผลตรวจสุขภาพรายหมวด"></canvas></div>
+  <div id="tleg" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;color:var(--color-text-secondary)"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SHEET_API='https://script.google.com/macros/s/AKfycbwkNt1CbFT5f2cYVIpxzjjX-3gP2eMdsh4SBeprF6fAu__fL8Cq9knVfFmXZhg0yDESIA/exec';
+
+// fallback categories & units when sheet's column A is blank
+const CAT_HINT={Glucose:'น้ำตาลในเลือด','Uric acid':'กรดยูริค','Uric pH':'กรดยูริค'};
+const UNIT_HINT={Glucose:'mg/dL',Cholesterol:'mg/dL',Triglyceride:'mg/dL',HDL:'mg/dL',LDL:'mg/dL',ALT:'U/L','AST':'U/L',WBC:'K/μL',RBC:'M/μL',Hemoglobin:'g/dL',Hematocrit:'%'};
+
+function parseRange(rangeStr){
+  const s=rangeStr.trim();
+  let m=s.match(/^<\s*([\d.]+)$/);if(m)return{min:null,max:parseFloat(m[1]),disp:'<'+m[1]};
+  m=s.match(/^>\s*([\d.]+)$/);if(m)return{min:parseFloat(m[1]),max:null,disp:'>'+m[1]};
+  m=s.match(/^([\d.]+)\s*[-–]\s*([\d.]+)\s*(%?)$/);if(m)return{min:parseFloat(m[1]),max:parseFloat(m[2]),disp:m[1]+'–'+m[2]+m[3]};
+  return{min:null,max:null,disp:s};
+}
+
+function prettyYear(s){
+  if(s==='2025/1')return'ม.ค.25';
+  if(s==='2025/6')return'มิ.ย.25';
+  return s;
+}
+
+let yrs=[],metrics=[];
+
+function toNum(v){if(v===''||v==null)return null;const n=typeof v==='number'?v:parseFloat(v);return isNaN(n)?null:n;}
+
+window.__healthCB=function(data){
+  try{
+    // data = { sheetName: [[row1], [row2], ...] } — use first sheet
+    const sheetName=Object.keys(data)[0];
+    const rows=data[sheetName];
+    if(!rows||rows.length<2)throw new Error('ไม่พบข้อมูลใน sheet');
+    const header=rows[0];
+    yrs=header.slice(2).map(v=>prettyYear(String(v)));
+    let lastCat='อื่นๆ';
+    metrics=rows.slice(1).map(r=>{
+      const catCell=String(r[0]||'').trim();
+      const nameCell=String(r[1]||'').trim();
+      const nm=nameCell.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+      const name=nm?nm[1].trim():nameCell;
+      const rng=nm?parseRange(nm[2]):{min:null,max:null,disp:''};
+      const cat=catCell||CAT_HINT[name]||lastCat;
+      lastCat=cat;
+      const vals=r.slice(2,2+yrs.length).map(toNum);
+      return{name,range:rng.disp,min:rng.min,max:rng.max,vals,cat,unit:UNIT_HINT[name]||''};
+    }).filter(m=>m.name);
+    init();
+  }catch(err){
+    document.getElementById('hdr').innerHTML=`<p style="color:var(--me-alert-text);padding:1rem;background:var(--me-alert-bg);border-radius:8px">ประมวลผลข้อมูลล้มเหลว: ${err.message}</p>`;
+  }
+};
+
+const s=document.createElement('script');
+s.src=`${SHEET_API}?callback=__healthCB`;
+s.onerror=()=>{document.getElementById('hdr').innerHTML=`<p style="color:var(--me-alert-text);padding:1rem;background:var(--me-alert-bg);border-radius:8px">โหลดข้อมูลไม่สำเร็จ — ลองเช็คว่า login Google ด้วยบัญชีที่เป็นเจ้าของ Apps Script หรือยัง</p>`;};
+document.head.appendChild(s);
+
+const catColors={
+  'ไขมัน':['#E25A53','#5FBFBA','#FDB35D','#8A4A8C'],
+  'น้ำตาลในเลือด':['#E25A53'],
+  'ค่าเอนไซม์ตับ':['#FDB35D','#E25A53'],
+  'เลือด':['#5FBFBA','#E25A53','#FDB35D','#8A4A8C'],
+  'การทำงานของไต':['#5FBFBA'],
+  'กรดยูริค':['#5FBFBA','#FDB35D'],
+};
+const catDash={
+  'ไขมัน':[null,null,null,[5,3]],
+  'เลือด':[null,[4,3],null,[4,3]],
+};
+
+function avg(vals){const f=vals.filter(v=>v!==null);return f.reduce((a,b)=>a+b,0)/f.length;}
+function st(m){
+  const v=m.vals[m.vals.length-1];
+  if(v===null)return'ok';
+  if(m.max!==null&&v>m.max)return'hi';
+  if(m.min!==null&&v<m.min)return'lo';
+  return'ok';
+}
+function bdg(s){
+  const map={ok:['ok','ปกติ'],hi:['hi','สูง'],lo:['lo','ต่ำ']};
+  const[c,l]=map[s];
+  return`<span class="bk ${c}">${l}</span>`;
+}
+function spark(vals,s){
+  const pts=vals.map((v,i)=>({v,i})).filter(p=>p.v!==null);
+  if(pts.length<2)return'<div style="height:26px;width:70px"></div>';
+  const W=70,H=26,vs=pts.map(p=>p.v),mn=Math.min(...vs),mx=Math.max(...vs),rng=mx-mn||1,n=vals.length-1;
+  const xs=pts.map(p=>(p.i/n)*W),ys=pts.map(p=>H-((p.v-mn)/rng)*(H-6)-3);
+  const d=xs.map((x,i)=>`${i===0?'M':'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const col={ok:'#5FBFBA',hi:'#E25A53',lo:'#FDB35D'}[s];
+  return`<svg width="${W}" height="${H}" style="display:block;overflow:visible" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${xs[xs.length-1].toFixed(1)}" cy="${ys[ys.length-1].toFixed(1)}" r="2.5" fill="${col}"/>
+  </svg>`;
+}
+
+function init(){
+const cats=[...new Set(metrics.map(m=>m.cat))];
+const okN=metrics.filter(m=>st(m)==='ok').length,alN=metrics.length-okN;
+const yrLabel=`${yrs[0]}–${yrs[yrs.length-1]}`;
+
+document.getElementById('hdr').innerHTML=`
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.5rem">
+  <div>
+    <p style="margin:0;font-size:20px;font-weight:500;color:var(--color-text-primary)">สรุปผลตรวจสุขภาพ</p>
+    <p style="margin:4px 0 0;font-size:13px;color:var(--color-text-secondary)">ข้อมูลปี ${yrLabel} · เปรียบเทียบค่าล่าสุดกับค่าเฉลี่ย</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <span class="bk ok" style="font-size:12px;padding:5px 14px">${okN} ปกติ</span>
+    <span class="bk hi" style="font-size:12px;padding:5px 14px">${alN} ต้องดูแล</span>
+  </div>
+</div>`;
+
+let ch='';
+cats.forEach(cat=>{
+  const ms=metrics.filter(m=>m.cat===cat);
+  ch+=`<p class="st">${cat}</p><div class="mg">`;
+  ms.forEach(m=>{
+    const s=st(m),v=m.vals[m.vals.length-1],a=avg(m.vals);
+    const dv=v!==null?v:'–';
+    const diff=v!==null?(v-a):0;
+    const diffSign=diff>0?'+':'';
+    const diffCol=s==='hi'?(diff>0?'#E25A53':'#5FBFBA'):s==='lo'?(diff<0?'#E25A53':'#5FBFBA'):'var(--color-text-tertiary)';
+    ch+=`<div class="mc">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:500;color:var(--color-text-secondary)">${m.name}</span>
+        ${bdg(s)}
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:22px;font-weight:500;line-height:1;color:var(--color-text-primary)">${dv}<span style="font-size:11px;color:var(--color-text-tertiary);font-weight:400;margin-left:2px">${m.unit}</span></div>
+          <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">ล่าสุด ${yrs[yrs.length-1]}</div>
+        </div>
+        <div style="border-left:.5px solid var(--color-border-tertiary);padding-left:10px">
+          <div style="font-size:14px;font-weight:500;color:var(--color-text-secondary)">${a.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary)">เฉลี่ย</div>
+        </div>
+        ${v!==null?`<div style="font-size:11px;color:${diffCol};font-weight:500;margin-left:auto">${diffSign}${diff.toFixed(1)}</div>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        ${spark(m.vals,s)}
+        <span style="font-size:11px;color:var(--color-text-tertiary)">${m.range}</span>
+      </div>
+    </div>`;
+  });
+  ch+='</div>';
+});
+document.getElementById('cards').innerHTML=ch;
+
+let chart=null,activeCat=cats[0];
+
+function catAlert(cat){
+  const ms=metrics.filter(m=>m.cat===cat);
+  const hasHi=ms.some(m=>st(m)==='hi');
+  const hasLo=ms.some(m=>st(m)==='lo');
+  return hasHi?'alert':hasLo?'low':'';
+}
+
+const tabsEl=document.getElementById('tabs');
+cats.forEach(cat=>{
+  const al=catAlert(cat);
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(cat===activeCat?' active '+(al||''):'');
+  btn.textContent=cat;
+  btn.onclick=()=>{
+    activeCat=cat;
+    document.querySelectorAll('.tab-btn').forEach(b=>{
+      const bc=b.textContent;
+      const bAl=catAlert(bc);
+      b.className='tab-btn'+(bc===activeCat?' active '+(bAl||''):'');
+    });
+    renderChart(cat);
+  };
+  tabsEl.appendChild(btn);
+});
+
+function renderChart(cat){
+  const ms=metrics.filter(m=>m.cat===cat);
+  const cols=catColors[cat]||['#7F77DD','#E25A53','#1D9E75','#BA7517'];
+  const dashes=catDash[cat]||[];
+  const datasets=ms.map((m,i)=>({
+    label:m.name,
+    data:m.vals,
+    borderColor:cols[i]||'#888',
+    backgroundColor:'transparent',
+    borderWidth:2,
+    borderDash:dashes[i]||[],
+    pointRadius:3,
+    pointBackgroundColor:cols[i]||'#888',
+    tension:.35,
+    spanGaps:false,
+  }));
+
+  const legEl=document.getElementById('tleg');
+  legEl.innerHTML=ms.map((m,i)=>{
+    const bd=dashes[i];
+    const lineStyle=bd?`border-top:2px dashed ${cols[i]||'#888'}`:`background:${cols[i]||'#888'}`;
+    const span=bd?`<span style="width:14px;height:0;${lineStyle};display:inline-block;vertical-align:middle;margin-right:4px"></span>`:`<span style="width:14px;height:2px;${lineStyle};display:inline-block;border-radius:2px;vertical-align:middle;margin-right:4px"></span>`;
+    return`<span style="display:flex;align-items:center;gap:2px">${span}${m.name}</span>`;
+  }).join('');
+
+  if(chart){chart.destroy();}
+  chart=new Chart(document.getElementById('tc'),{
+    type:'line',
+    data:{labels:yrs,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:11},autoSkip:false,maxRotation:0},grid:{display:false}},
+        y:{ticks:{font:{size:11}},grid:{color:'rgba(128,128,128,.1)'}},
+      }
+    }
+  });
+}
+
+renderChart(activeCat);
+}
+</script>
+</body>
+</html>
