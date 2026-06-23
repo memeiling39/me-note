@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTS WORLD TOUR 'ARIRANG' — Bangkok Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/BoonJot/BoonJot.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f5f5f5;color:#111;font-family:'BoonJot',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.6;padding-bottom:3rem}
+  .hero-wrap{background:#fff;border-bottom:1px solid #f0f0f0;padding-top:env(safe-area-inset-top,0px)}
+  .hero{background:#fff;padding:1.5rem 1.5rem 2rem;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(232,41,41,0.025) 0,rgba(232,41,41,0.025) 1px,transparent 1px,transparent 8px);pointer-events:none}
+  .hero-eyebrow{font-size:11px;letter-spacing:0.25em;color:#999;text-transform:uppercase;margin-bottom:0.75rem}
+  .hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,10vw,5.5rem);color:#111;line-height:0.95;letter-spacing:0.02em}
+  .hero-title span{display:block;color:#FF1240}
+  .hero-logo{display:flex;justify-content:center;align-items:center;margin:1rem 0}
+  .hero-logo img{height:42px;width:auto;display:block}
+  .hero-meta{margin-top:0.5rem;font-size:13px;color:#666;letter-spacing:0.04em}
+  .zone-badge{display:inline-block;background:#FF1240;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.1em;padding:4px 14px;border-radius:20px;margin-top:0.75rem;text-transform:uppercase}
+  .section{padding:1.5rem 1.25rem 0.5rem;max-width:720px;margin:0 auto}
+  .sec-title{font-size:1.1rem;font-weight:700;color:#111;margin-bottom:1rem;border-left:4px solid #FF1240;padding-left:10px}
+  .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.75rem;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+  .card-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .ci-red,.ci-green,.ci-amber,.ci-blue{background:#ffe5ea;color:#FF1240}
+  .card-title{font-size:14px;font-weight:700;color:#111}
+  .card-body{font-size:13px;color:#555;line-height:1.65}
+  .card-body b{color:#222;font-weight:700}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:4px;margin-bottom:4px;font-weight:700;letter-spacing:0.03em}
+  .tag-ok{background:#e6f7ee;color:#1a7a42;border:1px solid #b2e0c4}
+  .tag-no{background:#fde8e8;color:#c41f1f;border:1px solid #f5b8b8}
+  .tag-warn{background:#fff6e0;color:#a06a00;border:1px solid #f5d990}
+  .divider{border:none;border-top:1px solid #f0f0f0;margin:0.5rem auto;max-width:720px}
+  .checklist-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:0.25rem}
+  .chk-item{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px 10px;border-radius:8px;border:1px solid #eee;background:#fafafa;transition:border-color 0.15s,background 0.15s;user-select:none}
+  .chk-item.done{background:#fef5f5;border-color:#f5b8b8}
+  .chk-box{width:18px;height:18px;border-radius:4px;border:1.5px solid #ccc;background:#fff;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+  .chk-item.done .chk-box{background:#FF1240;border-color:#FF1240;color:#fff}
+  .chk-text{font-size:12px;color:#666;line-height:1.4;transition:color 0.15s}
+  .chk-item.done .chk-text{color:#c41f1f}
+  .chk-progress{height:4px;background:#f0f0f0;border-radius:2px;margin-top:1rem;overflow:hidden}
+  .chk-bar{height:100%;background:#FF1240;border-radius:2px;transition:width 0.3s}
+  .chk-count{font-size:11px;color:#aaa;margin-top:6px;text-align:right}
+  .route-step{display:flex;gap:12px;margin-bottom:0}
+  .route-line{display:flex;flex-direction:column;align-items:center}
+  .route-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .route-connector{width:2px;flex:1;min-height:24px;background:#e8e8e8;margin:2px 0}
+  .route-content{padding-bottom:1rem;flex:1}
+  .route-station{font-size:13px;font-weight:700;color:#111}
+  .route-desc{font-size:12px;color:#777;margin-top:2px}
+  .tip-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f5f5}
+  .tip-row:last-child{border-bottom:none}
+  .tip-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+  .tip-text{font-size:13px;color:#555;line-height:1.55}
+  .tip-text b{color:#222}
+  .warn-box{background:#fde8e8;border:1px solid #f5b8b8;border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.75rem;font-size:13px;color:#c41f1f;line-height:1.6}
+  .warn-box b{color:#a01a1a}
+  .ok-box{background:#e6f7ee;border:1px solid #b2e0c4;border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.75rem;font-size:13px;color:#1a7a42;line-height:1.6}
+  .footer{text-align:center;font-size:11px;color:#bbb;padding:2rem 1rem 0;letter-spacing:0.05em;max-width:720px;margin:0 auto}
+  .back-link{display:inline-flex;align-items:center;gap:6px;margin:1rem 1.25rem 0;padding:8px 16px;background:#fff;border:1px solid #eee;border-radius:999px;color:#666;text-decoration:none;font-size:13px;font-weight:700;transition:all 0.2s ease;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+  .back-link:hover,.back-link:active{color:#FF1240;border-color:#FF1240;transform:translateX(-2px)}
+  @media(max-width:480px){.checklist-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero-wrap">
+<a href="index.html" class="back-link">← กลับ</a>
+
+<div class="hero">
+  <div class="hero-eyebrow">ARMY SURVIVAL GUIDE</div>
+  <div class="hero-title">BTS<span>WORLD TOUR</span>ARIRANG</div>
+  <div class="hero-logo">
+    <img src="bts-logo.svg" alt="BTS Arirang">
+  </div>
+  <div class="hero-meta">RAJAMANGALA NATIONAL STADIUM &nbsp;·&nbsp; BANGKOK</div>
+  <div class="hero-meta" style="margin-top:4px;color:#111;font-size:15px;font-weight:700">อาทิตย์ที่ 6 ธันวาคม 2569 &nbsp;·&nbsp; DAY 3</div>
+  <div class="zone-badge">Zone E2J &nbsp;·&nbsp; ชั้น 2 อัฒจันทร์</div>
+</div>
+</div>
+
+<div class="section">
+  <div class="sec-title">โซน E2J อยู่ตรงไหน?</div>
+  <div class="ok-box">
+    <b>เวที 360° กลางสนาม</b> — E2J คืออัฒจันทร์ชั้น 2 ฝั่ง E (ทิศตะวันออก) เห็นเวทีกลางได้แบบ bird's eye view วิวครอบคลุม ไม่ต้องแย่งกัน มีที่นั่งทุก seat — ไม่ใช่ standing zone
+  </div>
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-amber"><i class="ti ti-eye" aria-hidden="true"></i></div>
+      <div class="card-title">วิวจากที่นั่ง</div>
+    </div>
+    <div class="card-body">เวที 360° หมายความว่า <b>ไม่มีด้านหลังเวที</b> เห็นทุกมุม BTS ลง catwalk มาทิศไหนก็มีโอกาสเจอใกล้ กล้องส่องทางไกล <b>8×21 หรือ 10×25</b> แนะนำพกไป (รอ event notice ยืนยันกฎกล้องส่องอีกที)</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="sec-title">วิธีเดินทาง</div>
+  <div class="warn-box"><b>⚠️ เผื่อเวลา 3–4 ชั่วโมง</b> ก่อนการแสดง — การจราจรรอบราชมังหนักมากช่วงคอนเสิร์ต</div>
+  <div class="card" style="padding-bottom:0.5rem">
+    <div class="card-h" style="margin-bottom:1rem">
+      <div class="card-icon ci-red"><i class="ti ti-train" aria-hidden="true"></i></div>
+      <div class="card-title">แนะนำ — Airport Rail Link</div>
+    </div>
+    <div class="route-step">
+      <div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div>
+      <div class="route-content"><div class="route-station">BTS พญาไท / MRT เพชรบุรี</div><div class="route-desc">ต่อ Airport Rail Link ที่สถานีพญาไท</div></div>
+    </div>
+    <div class="route-step">
+      <div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div>
+      <div class="route-content"><div class="route-station">ARL สถานีรามคำแหง</div><div class="route-desc">สถานีที่ใกล้ราชมังที่สุด ~15 นาทีจากพญาไท</div></div>
+    </div>
+    <div class="route-step">
+      <div class="route-line"><div class="route-dot" style="background:#111"></div></div>
+      <div class="route-content"><div class="route-station">ราชมังคลากีฬาสถาน</div><div class="route-desc">ต่อ taxi / วินมอเตอร์ไซค์ / สองแถว จากสถานีรามคำแหง</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-green"><i class="ti ti-sailboat" aria-hidden="true"></i></div>
+      <div class="card-title">ทางเลือก — เรือคลอง (ขาไปเท่านั้น)</div>
+    </div>
+    <div class="card-body">หลบรถติดได้ดีมาก <b>แต่เรือหยุดวิ่งช่วงดึก</b> ต้องเตรียมแผนขากลับแยกไว้</div>
+  </div>
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-amber"><i class="ti ti-car" aria-hidden="true"></i></div>
+      <div class="card-title">Grab / แท็กซี่ — ขากลับ</div>
+    </div>
+    <div class="card-body"><b>อย่าเรียกตรงหน้าสนาม</b> เดินออกจากฝูงชน 200–300 เมตรก่อน ค่อยกด app / เผื่อรอ 30–60 นาที</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="sec-title">กฎเข้างาน — ห้าม / อนุญาต</div>
+  <div class="card">
+    <div class="card-body" style="line-height:2.2">
+      <span class="tag tag-no">กล้องถ่ายรูปทุกชนิด</span>
+      <span class="tag tag-no">กล้องวิดีโอ</span>
+      <span class="tag tag-no">อุปกรณ์บันทึกภาพ</span>
+      <span class="tag tag-no">ป้ายขนาดใหญ่</span>
+      <span class="tag tag-no">บอร์ดบังทัศนวิสัย</span>
+      <br>
+      <span class="tag tag-ok">สมาร์ทโฟน ✓</span>
+      <span class="tag tag-ok">ARMY Bomb official ✓</span>
+      <span class="tag tag-ok">ของ fan เล็กน้อย ✓</span>
+      <span class="tag tag-warn">กล้องส่องทางไกล — รอประกาศ</span>
+      <br>
+      <span style="font-size:11px;color:#aaa;margin-top:4px;display:block">* ยืนยันกฎขั้นสุดท้ายจาก Live Nation Tero ก่อนวันงาน</span>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="sec-title">เทคนิคเอาตัวรอด</div>
+
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-red"><i class="ti ti-toilet-paper" aria-hidden="true"></i></div>
+      <div class="card-title">ห้องน้ำ — เทคนิคหลบคิว</div>
+    </div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-clock" aria-hidden="true"></i></span><div class="tip-text"><b>เข้าห้องน้ำก่อนเข้าสนามเสมอ</b> — คิวสั้นกว่าในสนามมาก</div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-stairs" aria-hidden="true"></i></span><div class="tip-text">E2J ชั้น 2 มีห้องน้ำในชั้นเดียวกัน <b>ไม่ต้องลงมา</b></div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-music" aria-hidden="true"></i></span><div class="tip-text">ช่วงที่คนน้อยที่สุด: <b>ก่อน encore / ระหว่าง VCR</b></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-blue"><i class="ti ti-device-mobile" aria-hidden="true"></i></div>
+      <div class="card-title">มือถือ — เก็บ moment ให้ได้</div>
+    </div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-wifi-off" aria-hidden="true"></i></span><div class="tip-text"><b>สัญญาณช้ามากในงาน</b> เปิด Low Data Mode ล่วงหน้า ปิดแอพ background</div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-screenshot" aria-hidden="true"></i></span><div class="tip-text">Screenshot ทุกอย่างไว้ offline: <b>บัตร + ที่นั่ง + แผนที่ + เส้นทางกลับ</b></div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-moon" aria-hidden="true"></i></span><div class="tip-text">ช่วงเพลงสำคัญลอง <b>Airplane Mode</b> สักครู่ถ่ายได้เลยโดยไม่มีแอพรบกวน</div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-battery-charging" aria-hidden="true"></i></span><div class="tip-text">ชาร์จให้เต็ม 100% <b>พก Powerbank 10,000+ mAh</b> งานยาวกว่า 3 ชั่วโมง</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <div class="card-icon ci-amber"><i class="ti ti-temperature" aria-hidden="true"></i></div>
+      <div class="card-title">อากาศ & ความร้อน</div>
+    </div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-wind" aria-hidden="true"></i></span><div class="tip-text">ธ.ค. อุณหภูมิ 20–25°C แต่ <b>ฝูงชนแน่นทำให้รู้สึกร้อนขึ้น 5–8°C</b></div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-fan" aria-hidden="true"></i></span><div class="tip-text"><b>พัดลมพกพา — จำเป็นมาก</b> แบบ handheld หรือคล้องคอ ช่วยได้ก่อนเข้าสนาม</div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-droplet" aria-hidden="true"></i></span><div class="tip-text"><b>สเปรย์น้ำเย็น / เจลเย็น</b> พ่นที่คอ ข้อมือ ลดความร้อนได้เร็ว</div></div>
+    <div class="tip-row"><span class="tip-icon"><i class="ti ti-shirt" aria-hidden="true"></i></span><div class="tip-text">เลือกเสื้อ <b>ผ้าระบาย / dry-fit</b> รองเท้าเดินสบาย ไม่ใส่ส้นสูง</div></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="sec-title">Checklist ของที่ต้องพก</div>
+  <div class="checklist-grid" id="checklist"></div>
+  <div class="chk-progress"><div class="chk-bar" id="chk-bar" style="width:0%"></div></div>
+  <div class="chk-count" id="chk-count">0 / 18 พร้อมแล้ว</div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="sec-title">Timeline วันงาน</div>
+  <div class="card" style="padding-bottom:0.5rem">
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div><div class="route-content"><div class="route-station">12:00 น.</div><div class="route-desc">ออกจากบ้าน เผื่อเวลาเยอะๆ</div></div></div>
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div><div class="route-content"><div class="route-station">14:00 น.</div><div class="route-desc">ถึงราชมัง เข้าคิว merch / ถ่ายรูป / เข้าห้องน้ำ</div></div></div>
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div><div class="route-content"><div class="route-station">16:00–17:00 น.</div><div class="route-desc">เช็คบัตร เข้าสนาม หาที่นั่ง E2J ชั้น 2</div></div></div>
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div><div class="route-content"><div class="route-station">18:30 น.</div><div class="route-desc">เตรียม ARMY Bomb ชาร์จ Powerbank เปิดแอพพร้อม</div></div></div>
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#FF1240"></div><div class="route-connector"></div></div><div class="route-content"><div class="route-station">19:00 น.</div><div class="route-desc">การแสดงเริ่ม 💜</div></div></div>
+    <div class="route-step"><div class="route-line"><div class="route-dot" style="background:#111"></div></div><div class="route-content"><div class="route-station">22:30+ น.</div><div class="route-desc">จบแสดง — เดินออกก่อนเพลงสุดท้ายถ้าต้องการหนีรถติด</div></div></div>
+  </div>
+</div>
+
+<div class="footer">MADE WITH 💜 FOR ARMY · BTS WORLD TOUR 'ARIRANG' IN BANGKOK · DEC 6, 2026</div>
+
+<script>
+const items=[
+  {e:"💜",t:"ARMY Bomb (official)"},
+  {e:"🔋",t:"Powerbank 10,000+ mAh"},
+  {e:"📱",t:"มือถือชาร์จเต็ม 100%"},
+  {e:"🌬️",t:"พัดลมพกพา"},
+  {e:"💧",t:"สเปรย์น้ำ / เจลเย็น"},
+  {e:"💊",t:"ยาดม + ยาแก้ปวด"},
+  {e:"🧻",t:"ทิชชู่เปียก"},
+  {e:"💵",t:"เงินสด (ฉุกเฉิน)"},
+  {e:"🎟️",t:"Screenshot บัตร (offline)"},
+  {e:"🗺️",t:"Screenshot แผนที่สนาม"},
+  {e:"👟",t:"รองเท้าสบาย ไม่ส้นสูง"},
+  {e:"👜",t:"กระเป๋าเล็ก ไม่เทอะทะ"},
+  {e:"🔭",t:"กล้องส่องทางไกล"},
+  {e:"🧥",t:"เสื้อคลุมบาง (กันลม)"},
+  {e:"🍫",t:"ขนมเล็กน้อย / พลังงาน"},
+  {e:"💈",t:"ยาหม่อง / ยาดมส้ม"},
+  {e:"⚠️",t:"ห้ามกล้องถ่ายรูป!"},
+  {e:"🆔",t:"บัตรประชาชน (สำรอง)"},
+];
+const cl=document.getElementById('checklist');
+const bar=document.getElementById('chk-bar');
+const cnt=document.getElementById('chk-count');
+const state=new Array(items.length).fill(false);
+function update(){
+  const done=state.filter(Boolean).length;
+  bar.style.width=(done/items.length*100)+'%';
+  cnt.textContent=done+' / '+items.length+' พร้อมแล้ว';
+}
+items.forEach((item,i)=>{
+  const div=document.createElement('div');
+  div.className='chk-item';
+  div.setAttribute('role','checkbox');
+  div.setAttribute('aria-checked','false');
+  div.setAttribute('tabindex','0');
+  div.innerHTML='<div class="chk-box" id="cb'+i+'"><i class="ti ti-check" style="font-size:12px;display:none"></i></div><div class="chk-text">'+item.e+' '+item.t+'</div>';
+  function toggle(){
+    state[i]=!state[i];
+    div.classList.toggle('done',state[i]);
+    div.setAttribute('aria-checked',state[i]);
+    div.querySelector('.chk-box i').style.display=state[i]?'block':'none';
+    update();
+  }
+  div.addEventListener('click',toggle);
+  div.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();toggle();}});
+  cl.appendChild(div);
+});
+update();
+</script>
+</body>
+</html>
