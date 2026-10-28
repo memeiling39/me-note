@@ -186,21 +186,61 @@ function photoBlobUrl(id) {
   return photoBlobUrls.get(id);
 }
 
-document.addEventListener('error', e => {
-  const img = e.target;
-  if (!(img instanceof HTMLImageElement) || !img.dataset.photoId) return;
-  if (img.dataset.fallback) { img.style.visibility = 'hidden'; return; }
+// transparent pixel shown (over the grey photo icon in CSS) while a Drive download is pending,
+// so Safari never draws its broken-image "?"
+const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+let lh3Blocked = false;   // set after the first lh3 failure; later photos go straight to Drive
+
+function photoTag(photoPath, size, className, attrs = '') {
+  const id = photoId(photoPath);
+  if (!id) return '';
+  const src = lh3Blocked ? BLANK_IMG : photoUrl(photoPath, size);
+  const cls = className + (lh3Blocked ? ' photo-loading' : '');
+  return `<img class="${cls}" src="${src}" data-photo-id="${escapeHtml(id)}" referrerpolicy="no-referrer" ${attrs}>`;
+}
+
+function loadViaDrive(img) {
+  if (img.dataset.fallback || !img.dataset.photoId) return;
   img.dataset.fallback = '1';
   photoBlobUrl(img.dataset.photoId)
-    .then(url => { img.src = url; })
-    .catch(err => { console.warn('Photo fallback failed:', err); img.style.visibility = 'hidden'; });
+    .then(url => { img.src = url; img.classList.remove('photo-loading'); })
+    .catch(err => console.warn('Photo fallback failed:', err));   // grey icon stays
+}
+
+// only download photos that are on (or near) the screen
+const photoObserver = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    photoObserver.unobserve(e.target);
+    loadViaDrive(e.target);
+  }
+}, { rootMargin: '300px' });
+
+new MutationObserver(mutations => {
+  for (const m of mutations) {
+    for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      const imgs = n.matches('img.photo-loading') ? [n] : n.querySelectorAll('img.photo-loading');
+      imgs.forEach(i => photoObserver.observe(i));
+    }
+  }
+}).observe(document.body, { childList: true, subtree: true });
+
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.dataset.photoId || img.dataset.fallback) return;
+  lh3Blocked = true;
+  img.classList.add('photo-loading');
+  img.src = BLANK_IMG;
+  loadViaDrive(img);
 }, true);
 
 function setPreviewPhoto(preview, photoPath) {
   delete preview.dataset.fallback;
-  preview.style.visibility = '';
   preview.dataset.photoId = photoId(photoPath);
-  preview.src = photoUrl(photoPath, 600);
+  preview.classList.toggle('photo-loading', lh3Blocked);
+  preview.src = lh3Blocked ? BLANK_IMG : photoUrl(photoPath, 600);
+  if (lh3Blocked) loadViaDrive(preview);
 }
 
 function renderItem(group) {
@@ -226,10 +266,7 @@ function renderItem(group) {
   if (counts.Stock) pills.push(`<span class="pill stock">${counts.Stock} Stock</span>`);
   if (counts.Finished) pills.push(`<span class="pill finished">${counts.Finished} Finished</span>`);
 
-  const img = photoUrl(photoPath);
-  const imgHtml = img
-    ? `<img class="item-photo" src="${img}" data-photo-id="${escapeHtml(photoId(photoPath))}" loading="lazy" referrerpolicy="no-referrer">`
-    : `<div class="item-photo"></div>`;
+  const imgHtml = photoTag(photoPath, 120, 'item-photo', 'loading="lazy"') || '<div class="item-photo photo-loading"></div>';
 
   return `
     <div class="item" data-key="${escapeHtml(group.key)}">
@@ -270,7 +307,6 @@ function openDetail(key) {
   });
 
   const sample = g.items[0];
-  const img = photoUrl(sample.photo);
   const rows = sorted.map(i => {
     const level = expiryLevel(i.category, i.expiryDate);
     const cls = level ? `expiry-${level}` : '';
@@ -289,7 +325,7 @@ function openDetail(key) {
   document.getElementById('modal').innerHTML = `
     <button class="modal-close" id="modal-close-btn" aria-label="ปิด">×</button>
     <div class="modal-photo-wrap">
-      ${img ? `<img class="modal-photo" src="${photoUrl(sample.photo, 600)}" data-photo-id="${escapeHtml(photoId(sample.photo))}" referrerpolicy="no-referrer">` : ''}
+      ${photoTag(sample.photo, 600, 'modal-photo')}
     </div>
     <div class="modal-body">
       <div class="modal-field">
@@ -454,7 +490,7 @@ function openForm({ row, template, backKey }) {
         <div class="full barcode-note" id="barcode-note" hidden></div>
         <label class="full">Item Image
           <div class="photo-drop">
-            <img id="photo-preview" ${img ? `src="${photoUrl(v.photo, 600)}" data-photo-id="${escapeHtml(photoId(v.photo))}"` : 'hidden'} referrerpolicy="no-referrer">
+            ${photoTag(v.photo, 600, '', 'id="photo-preview"') || '<img id="photo-preview" hidden referrerpolicy="no-referrer">'}
             <span class="photo-hint" id="photo-hint">${img ? 'แตะเพื่อเปลี่ยนรูป' : '+ แตะเพื่อเลือกรูป'}</span>
           </div>
           <input type="file" accept="image/*" id="photo-input" hidden>
