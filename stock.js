@@ -139,11 +139,68 @@ function render() {
   }).join('');
 }
 
-function photoUrl(photoPath) {
-  if (!photoPath) return '';
-  const filename = photoPath.split('/').pop();
-  const id = photoMap[filename];
-  return id ? `https://lh3.googleusercontent.com/d/${id}=w120` : '';
+function photoId(photoPath) {
+  return photoPath ? photoMap[photoPath.split('/').pop()] || '' : '';
+}
+
+function photoUrl(photoPath, size = 120) {
+  const id = photoId(photoPath);
+  return id ? `https://lh3.googleusercontent.com/d/${id}=w${size}` : '';
+}
+
+// ── photo fallback ──
+// lh3 links only load when the browser holds a Google sign-in cookie, which a home-screen web app
+// on iOS doesn't have. On error, download the file through the Drive API with our token instead,
+// shrink it, and keep it in Cache Storage so each photo is downloaded once per device.
+const PHOTO_CACHE = 'me-note-photos-v1';
+const photoBlobUrls = new Map();   // file id → Promise<object URL>
+let photoDownloads = 0;
+const photoQueue = [];
+
+async function withDownloadSlot(fn) {
+  if (photoDownloads >= 4) await new Promise(r => photoQueue.push(r));
+  photoDownloads++;
+  try { return await fn(); } finally {
+    photoDownloads--;
+    const next = photoQueue.shift();
+    if (next) next();
+  }
+}
+
+function photoBlobUrl(id) {
+  if (!photoBlobUrls.has(id)) {
+    const p = (async () => {
+      const key = `https://me-note.local/photo/${id}`;
+      let cache = null;
+      try { cache = await caches.open(PHOTO_CACHE); } catch {}
+      let blob = cache ? await cache.match(key).then(r => r && r.blob()).catch(() => null) : null;
+      if (!blob) {
+        blob = await withDownloadSlot(async () => compressImage(await MeNoteAuth.fetchDriveFile(id), 600));
+        if (cache) cache.put(key, new Response(blob, { headers: { 'Content-Type': 'image/jpeg' } })).catch(() => {});
+      }
+      return URL.createObjectURL(blob);
+    })();
+    p.catch(() => photoBlobUrls.delete(id));
+    photoBlobUrls.set(id, p);
+  }
+  return photoBlobUrls.get(id);
+}
+
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.dataset.photoId) return;
+  if (img.dataset.fallback) { img.style.visibility = 'hidden'; return; }
+  img.dataset.fallback = '1';
+  photoBlobUrl(img.dataset.photoId)
+    .then(url => { img.src = url; })
+    .catch(err => { console.warn('Photo fallback failed:', err); img.style.visibility = 'hidden'; });
+}, true);
+
+function setPreviewPhoto(preview, photoPath) {
+  delete preview.dataset.fallback;
+  preview.style.visibility = '';
+  preview.dataset.photoId = photoId(photoPath);
+  preview.src = photoUrl(photoPath, 600);
 }
 
 function renderItem(group) {
@@ -171,7 +228,7 @@ function renderItem(group) {
 
   const img = photoUrl(photoPath);
   const imgHtml = img
-    ? `<img class="item-photo" src="${img}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`
+    ? `<img class="item-photo" src="${img}" data-photo-id="${escapeHtml(photoId(photoPath))}" loading="lazy" referrerpolicy="no-referrer">`
     : `<div class="item-photo"></div>`;
 
   return `
@@ -232,7 +289,7 @@ function openDetail(key) {
   document.getElementById('modal').innerHTML = `
     <button class="modal-close" id="modal-close-btn" aria-label="ปิด">×</button>
     <div class="modal-photo-wrap">
-      ${img ? `<img class="modal-photo" src="${img.replace('=w120','=w600')}" referrerpolicy="no-referrer">` : ''}
+      ${img ? `<img class="modal-photo" src="${photoUrl(sample.photo, 600)}" data-photo-id="${escapeHtml(photoId(sample.photo))}" referrerpolicy="no-referrer">` : ''}
     </div>
     <div class="modal-body">
       <div class="modal-field">
@@ -397,7 +454,7 @@ function openForm({ row, template, backKey }) {
         <div class="full barcode-note" id="barcode-note" hidden></div>
         <label class="full">Item Image
           <div class="photo-drop">
-            <img id="photo-preview" ${img ? `src="${img.replace('=w120', '=w600')}"` : 'hidden'} referrerpolicy="no-referrer">
+            <img id="photo-preview" ${img ? `src="${photoUrl(v.photo, 600)}" data-photo-id="${escapeHtml(photoId(v.photo))}"` : 'hidden'} referrerpolicy="no-referrer">
             <span class="photo-hint" id="photo-hint">${img ? 'แตะเพื่อเปลี่ยนรูป' : '+ แตะเพื่อเลือกรูป'}</span>
           </div>
           <input type="file" accept="image/*" id="photo-input" hidden>
@@ -479,10 +536,9 @@ function openForm({ row, template, backKey }) {
     setPick(form.querySelector('[data-pick="unit"]'), allRows.map(r => r.unit), m.unit);
     if (!photoBlob && m.photo) {
       currentPhoto = m.photo;
-      const url = photoUrl(m.photo);
       const preview = document.getElementById('photo-preview');
-      if (url) {
-        preview.src = url.replace('=w120', '=w600');
+      if (photoId(m.photo)) {
+        setPreviewPhoto(preview, m.photo);
         preview.hidden = false;
         document.getElementById('photo-hint').textContent = 'แตะเพื่อเปลี่ยนรูป';
       }
@@ -502,6 +558,8 @@ function openForm({ row, template, backKey }) {
     if (!file) return;
     photoBlob = await compressImage(file);
     const preview = document.getElementById('photo-preview');
+    delete preview.dataset.photoId;
+    preview.style.visibility = '';
     preview.src = URL.createObjectURL(photoBlob);
     preview.hidden = false;
     document.getElementById('photo-hint').textContent = 'แตะเพื่อเปลี่ยนรูป';
@@ -617,6 +675,8 @@ async function runWrite(fn) {
   if (saveBtn) saveBtn.textContent = 'กำลังบันทึก…';
   errBox.innerHTML = '';
   try {
+    // first, while still inside the tap, so Google's popup is allowed if the token has expired
+    await MeNoteAuth.getToken({ interactive: true });
     await fn();
     await reload();
     closeDetail();
@@ -803,9 +863,7 @@ async function loadPhotoMap() {
     console.log(`Loaded ${Object.keys(map).length} photos from Drive folder`);
     return map;
   } catch (e) {
-    console.warn('Photo folder fetch failed (token may need re-auth for Drive scope):', e);
-    // wipe stored token so next reload re-prompts with new scope
-    MeNoteAuth.signOut();
+    console.warn('Photo folder fetch failed:', e);
     return {};
   }
 }
@@ -954,6 +1012,11 @@ document.getElementById('fab-add').addEventListener('click', () => openForm({}))
     ptr.classList.add('animate');
     show(16, 'loading');
     try {
+      if (!MeNoteAuth.hasValidToken()) {   // expired: show the sign-in button instead of failing
+        hide();
+        load();
+        return;
+      }
       try { sessionStorage.removeItem(PHOTO_MAP_CACHE_KEY); } catch {}
       await reload();
       hide();

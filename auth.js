@@ -21,32 +21,65 @@
     } catch { return null; }
   }
 
+  let pending = null;   // { resolve, reject } of the token request in flight
+  let inflight = null;
+
+  function settle(fn, value) {
+    const p = pending;
+    pending = null;
+    inflight = null;
+    if (p) p[fn](value);
+  }
+
   async function initClient() {
     await gisReady;
     if (tokenClient) return tokenClient;
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
-      callback: () => {},
-    });
-    return tokenClient;
-  }
-
-  async function getToken({ interactive = false } = {}) {
-    const stored = getStoredToken();
-    if (stored) return stored;
-    const client = await initClient();
-    return new Promise((resolve, reject) => {
-      client.callback = (resp) => {
-        if (resp.error) return reject(new Error(resp.error));
+      callback: (resp) => {
+        if (resp.error) return settle('reject', new Error(resp.error));
         sessionStorage.setItem(TOKEN_KEY, JSON.stringify({
           token: resp.access_token,
           expiresAt: Date.now() + (resp.expires_in * 1000),
         }));
-        resolve(resp.access_token);
-      };
-      client.requestAccessToken({ prompt: interactive ? '' : 'none' });
+        settle('resolve', resp.access_token);
+      },
+      // popup blocked or closed: without this the request never settles and callers hang
+      error_callback: (err) => settle('reject', new Error(err && err.type === 'popup_failed_to_open'
+        ? 'เบราว์เซอร์บล็อกหน้าต่าง login — reload หน้าแล้วเข้าสู่ระบบใหม่'
+        : 'เซสชันหมดอายุ — reload หน้าแล้วเข้าสู่ระบบใหม่')),
     });
+    return tokenClient;
+  }
+
+  // A new token needs Google's popup, which browsers only allow during a tap/click. So only
+  // interactive callers (sign-in, save buttons) may request one; background work fails fast.
+  // Keep everything before requestAccessToken synchronous so it stays inside the user's tap.
+  async function getToken({ interactive = false } = {}) {
+    const stored = getStoredToken();
+    if (stored) return stored;
+    if (!interactive) throw new Error('เซสชันหมดอายุ — กดเข้าสู่ระบบใหม่อีกครั้ง');
+    if (inflight) return inflight;
+    const client = tokenClient || await initClient();
+    inflight = new Promise((resolve, reject) => {
+      pending = { resolve, reject };
+      client.requestAccessToken({ prompt: '' });
+    });
+    return inflight;
+  }
+
+  function hasValidToken() {
+    return !!getStoredToken();
+  }
+
+  async function fetchDriveFile(fileId) {
+    const token = await getToken();
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`Drive download failed (${res.status})`);
+    return res.blob();
   }
 
   async function apiGet(url, token) {
@@ -216,8 +249,10 @@
 
   window.MeNoteAuth = {
     getToken,
+    hasValidToken,
     fetchAllSheets,
     fetchDriveFolderFiles,
+    fetchDriveFile,
     updateCells,
     appendRow,
     deleteRow,
@@ -231,6 +266,6 @@
   s.src = 'https://accounts.google.com/gsi/client';
   s.async = true;
   s.defer = true;
-  s.onload = () => gisReadyResolve();
+  s.onload = () => { gisReadyResolve(); initClient(); };
   document.head.appendChild(s);
 })();
