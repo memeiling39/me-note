@@ -261,8 +261,8 @@ h1 {
   border-radius: var(--me-radius);
   max-width: 520px;
   width: 100%;
-  max-height: calc(100vh - 2rem);
-  max-height: calc(100dvh - 2rem);
+  /* the backdrop is sized to the visible viewport (above the iOS keyboard) in stock.js */
+  max-height: 100%;
   box-shadow: 0 12px 40px rgba(0,0,0,0.15);
   overflow: hidden;
   animation: pop 0.18s ease;

@@ -883,6 +883,27 @@ document.addEventListener('keydown', e => {
 document.getElementById('fab-add').addEventListener('click', () => openForm({}));
 
 // ── pull to refresh: re-fetches sheet + photo list without reloading the page ──
+// iOS keeps the layout viewport full height when the keyboard opens, so the modal would sit
+// under the keyboard; size the backdrop to the visible area and bring the focused field into view.
+(function fitModalAboveKeyboard() {
+  const backdrop = document.getElementById('modal-backdrop');
+  const vv = window.visualViewport;
+  if (vv) {
+    const fit = () => {
+      backdrop.style.top = vv.offsetTop + 'px';
+      backdrop.style.height = vv.height + 'px';
+      backdrop.style.bottom = 'auto';
+    };
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    fit();
+  }
+  document.getElementById('modal').addEventListener('focusin', e => {
+    if (!e.target.matches('input:not([type=hidden]):not([type=file]), select, textarea')) return;
+    setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+  });
+})();
+
 (function setupPullToRefresh() {
   const ptr = document.getElementById('ptr');
   const icon = document.getElementById('ptr-icon');
