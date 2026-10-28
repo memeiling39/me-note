@@ -3,8 +3,9 @@
 
 (function () {
   const CLIENT_ID = '228482250401-1v59etll53j26q1qqrif95ei3g4lvkco.apps.googleusercontent.com';
-  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.metadata.readonly';
-  const TOKEN_KEY = 'me-note-token';
+  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive';
+  // bump when SCOPES change so tokens with old scopes are discarded
+  const TOKEN_KEY = 'me-note-token-v2';
 
   let tokenClient = null;
   let gisReadyResolve;
@@ -52,6 +53,73 @@
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message || 'API error');
+    return data;
+  }
+
+  async function apiSend(method, url, body) {
+    const token = await getToken();
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    return data;
+  }
+
+  const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';
+
+  function updateCells(spreadsheetId, data) {
+    return apiSend('POST', `${SHEETS}/${spreadsheetId}/values:batchUpdate`, {
+      valueInputOption: 'USER_ENTERED',
+      data,
+    });
+  }
+
+  function appendRow(spreadsheetId, sheetTitle, row) {
+    const range = encodeURIComponent(`'${sheetTitle.replace(/'/g, "''")}'!A1`);
+    return apiSend('POST',
+      `${SHEETS}/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      { values: [row] });
+  }
+
+  async function deleteRow(spreadsheetId, sheetTitle, rowNumber) {
+    const token = await getToken();
+    const meta = await apiGet(`${SHEETS}/${spreadsheetId}?fields=sheets.properties(sheetId,title)`, token);
+    const sheet = meta.sheets.find((s) => s.properties.title === sheetTitle);
+    if (!sheet) throw new Error(`ไม่เจอแท็บ ${sheetTitle}`);
+    return apiSend('POST', `${SHEETS}/${spreadsheetId}:batchUpdate`, {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId: sheet.properties.sheetId,
+            dimension: 'ROWS',
+            startIndex: rowNumber - 1,
+            endIndex: rowNumber,
+          },
+        },
+      }],
+    });
+  }
+
+  async function uploadToDrive(folderId, blob, name) {
+    const token = await getToken();
+    const boundary = 'menote' + Math.random().toString(36).slice(2);
+    const body = new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+      JSON.stringify({ name, parents: [folderId] }),
+      `\r\n--${boundary}\r\nContent-Type: ${blob.type || 'image/jpeg'}\r\n\r\n`,
+      blob,
+      `\r\n--${boundary}--`,
+    ]);
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'Upload failed');
     return data;
   }
 
@@ -150,6 +218,10 @@
     getToken,
     fetchAllSheets,
     fetchDriveFolderFiles,
+    updateCells,
+    appendRow,
+    deleteRow,
+    uploadToDrive,
     loadAllSheets,
     signOut: () => sessionStorage.removeItem(TOKEN_KEY),
   };
