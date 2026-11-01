@@ -79,6 +79,15 @@ function daysUntil(date) {
   return Math.round((day - today) / DAY_MS);
 }
 
+// short "how long" text for items that need attention; '' when the plain date is enough
+function relativeExpiry(date, level) {
+  const d = daysUntil(date);
+  if (d === null || (level !== 'soon' && level !== 'expired')) return '';
+  if (d === 0) return 'หมดวันนี้';
+  if (d === 1) return 'พรุ่งนี้';
+  return d > 0 ? `อีก ${d} วัน` : `เลยมา ${-d} วัน`;
+}
+
 // rows with a blank or unknown status are treated as Active everywhere
 function statusOf(row) {
   return STATUSES.includes(row.status) ? row.status : 'Active';
@@ -156,7 +165,7 @@ function render() {
     // total qty across all variants in this type
     const totalQty = groups.reduce((s, g) => s + g.items.reduce((q, i) => q + i.qty, 0), 0);
     return `
-      <div class="type-group">
+      <div class="type-group me-glass">
         <div class="type-header">
           <span class="type-name">${escapeHtml(type)}</span>
           <span class="type-count">${groups.length} รายการ · รวม ${totalQty} ชิ้น</span>
@@ -300,7 +309,7 @@ function renderItem(group) {
         <div class="count-pills">${pills.join('')}</div>
       </div>
       <div class="item-right">
-        ${earliestExpiry ? `<div class="item-expiry ${expiryClass}"${expiryClass === 'expired' ? ' title="หมดอายุแล้ว"' : ''}>${fmtDate(earliestExpiry)}</div>` : ''}
+        ${earliestExpiry ? `<div class="item-expiry ${expiryClass}" title="หมดอายุ ${fmtDate(earliestExpiry)}">${relativeExpiry(earliestExpiry, expiryClass) || fmtDate(earliestExpiry)}</div>` : ''}
         ${locations.size ? `<div class="item-loc">${[...locations].map(escapeHtml).join(', ')}</div>` : ''}
       </div>
     </div>
@@ -329,8 +338,9 @@ function openDetail(key) {
   const rows = sorted.map(i => {
     const status = statusOf(i);
     const level = expiryLevel(i.category, i.expiryDate);
+    const rel = relativeExpiry(i.expiryDate, level);
     const expiry = i.expiryDate
-      ? `<span class="variant-expiry ${level}">${level === 'expired' ? 'หมดอายุ ' : 'หมด '}${fmtDate(i.expiryDate)}</span>`
+      ? `<span class="variant-expiry ${level}">หมด ${fmtDate(i.expiryDate)}${rel ? ` · ${rel}` : ''}</span>`
       : '<span class="variant-expiry">ไม่ระบุวันหมดอายุ</span>';
     const meta = [i.location, i.batch || i.detail].filter(Boolean).map(escapeHtml).join(' · ');
     return `
@@ -892,23 +902,23 @@ function renderSummary() {
     else if (level === 'expired') expired += r.qty;
   }
   document.getElementById('summary').innerHTML = `
-    <div class="stat ok">
+    <div class="stat me-glass ok">
       <div class="label">Active</div>
       <div class="value">${counts.Active}</div>
     </div>
-    <div class="stat">
+    <div class="stat me-glass">
       <div class="label">Stock</div>
       <div class="value">${counts.Stock}</div>
     </div>
-    <div class="stat">
+    <div class="stat me-glass">
       <div class="label">Finished</div>
       <div class="value">${counts.Finished}</div>
     </div>
-    <div class="stat warn">
+    <div class="stat me-glass warn">
       <div class="label">ใกล้หมดอายุ</div>
       <div class="value">${soon}</div>
     </div>
-    <div class="stat alert">
+    <div class="stat me-glass alert">
       <div class="label">หมดอายุแล้ว</div>
       <div class="value">${expired}</div>
     </div>

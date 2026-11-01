@@ -1,6 +1,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body.me-themed { background: #fff; }
 html, body { overscroll-behavior-y: contain; }
+/* Stock's glass is more solid than the home page's so lists stay easy to read */
+.me-glass { background: rgba(255, 255, 255, 0.7); }
 
 .ptr {
   position: fixed;
@@ -25,7 +26,8 @@ html, body { overscroll-behavior-y: contain; }
 .ptr.ready .ptr-icon { transform: rotate(180deg); }
 .ptr.loading .ptr-icon { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-body { padding-bottom: 3rem; }
+/* room for the + button so it never covers the last item */
+body { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
 .wrap { max-width: 880px; margin: 0 auto; padding: 0 1rem; }
 
 h1 {
@@ -44,10 +46,8 @@ h1 {
   margin-bottom: 1.25rem;
 }
 .stat {
-  background: var(--me-surface);
-  border: 1px solid var(--me-border);
   border-radius: var(--me-radius-sm);
-  padding: 0.75rem 0.8rem;
+  padding: 0.6rem 0.75rem;
   text-align: left;
 }
 .stat .label {
@@ -71,8 +71,6 @@ h1 {
 .tabs {
   display: flex;
   gap: 4px;
-  background: var(--me-surface);
-  border: 1px solid var(--me-border);
   border-radius: var(--me-radius-pill);
   padding: 4px;
   margin-bottom: 1rem;
@@ -113,7 +111,7 @@ h1 {
   padding: 10px 14px;
   border: 1px solid var(--me-border);
   border-radius: var(--me-radius-pill);
-  background: var(--me-surface);
+  background: rgba(255, 255, 255, 0.7);
   font-family: inherit;
   font-size: 0.9rem;
   color: var(--me-ink);
@@ -123,17 +121,17 @@ h1 {
 }
 .filter-select { flex: 0 0 auto; }
 @media (max-width: 480px) {
-  .controls { gap: 0.4rem; }
-  .search { font-size: 16px; padding-left: 12px; padding-right: 12px; }
-  .filter-select { font-size: 0.8rem; padding-left: 12px; padding-right: 12px; }
-  .filter-select { padding-right: 28px; background-position: right 10px center; }
+  /* search gets its own row so the placeholder isn't cut; the two filters share the next row */
+  .controls { gap: 0.4rem; flex-wrap: wrap; }
+  .search { flex-basis: 100%; font-size: 16px; padding-left: 14px; padding-right: 14px; }
+  .filter-select { flex: 1 1 0; min-width: 0; font-size: 0.85rem; padding-left: 14px; padding-right: 30px; background-position: right 12px center; }
 }
 .search:focus { border-color: var(--me-teal); }
 .filter-select {
   padding: 10px 36px 10px 16px;
   border: 1px solid var(--me-border);
   border-radius: var(--me-radius-pill);
-  background-color: var(--me-surface);
+  background-color: rgba(255, 255, 255, 0.7);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='none' stroke='%238A7F6E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5L6 8l3.5-3.5'/></svg>");
   background-repeat: no-repeat;
   background-position: right 14px center;
@@ -146,14 +144,17 @@ h1 {
 }
 
 /* type group */
-.type-group { margin-bottom: 1.5rem; }
+.type-group {
+  margin-bottom: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--me-radius);
+}
 .type-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 0.5rem 0.25rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--me-border);
+  padding: 0.6rem 0.25rem 0.5rem;
+  border-bottom: 1px solid rgba(138, 127, 110, 0.18);
 }
 .type-name {
   font-family: 'BoonJot', sans-serif;
@@ -172,11 +173,12 @@ h1 {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid var(--me-border);
+  border-bottom: 1px solid rgba(138, 127, 110, 0.18);
+  border-radius: var(--me-radius-sm);
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.item:hover { background: var(--me-cream); }
+.item:hover { background: rgba(255, 255, 255, 0.55); }
 .item:focus-visible, .variant:focus-visible {
   outline: 2px solid var(--me-teal-ink);
   outline-offset: -2px;
@@ -237,7 +239,6 @@ h1 {
   background: var(--me-coral-soft);
   color: var(--me-coral);
   font-weight: 700;
-  text-decoration: line-through;
 }
 .item-loc {
   font-size: 0.75rem;
@@ -267,10 +268,11 @@ h1 {
 .pill.finished { background: #eee; color: #777; }
 
 @media (max-width: 480px) {
-  /* 5 cards on a phone: statuses 3 across, expiry cards 2 across */
-  .summary { grid-template-columns: repeat(6, 1fr); }
-  .summary .stat { grid-column: span 2; }
-  .summary .stat:nth-child(n+4) { grid-column: span 3; }
+  /* all 5 summary cards in one short row on a phone */
+  .summary { gap: 0.35rem; margin-bottom: 1rem; }
+  .stat { padding: 0.45rem 0.25rem; text-align: center; }
+  .stat .label { font-size: 9.5px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0; }
+  .stat .value { font-size: 1.15rem; }
   h1 { font-size: 1.5rem; }
 }
 

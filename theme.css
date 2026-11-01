@@ -53,6 +53,36 @@ body.me-themed {
   font-weight: 400;
 }
 
+/* soft colour blobs fixed behind the page, for frosted-glass cards to blur:
+   <div class="page-bg" aria-hidden="true"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div> */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.page-bg span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.35;
+}
+.page-bg .b1 { width: 55vmax; height: 55vmax; top: 10%;  left: -20vmax;  background: var(--me-coral); }
+.page-bg .b2 { width: 50vmax; height: 50vmax; top: 35%;  right: -18vmax; background: var(--me-teal); }
+.page-bg .b3 { width: 40vmax; height: 40vmax; bottom: -10vmax; left: 15%; background: var(--me-orange); }
+
+/* frosted glass surface; falls back to solid white where backdrop-filter is missing */
+.me-glass {
+  background: rgba(255, 255, 255, 0.45);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .me-glass { background: var(--me-surface); border-color: var(--me-border); }
+}
+
 /* ── components ────────────────────────────────────────── */
 
 /* back link (used at top of every sub-page) */
