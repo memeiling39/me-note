@@ -110,6 +110,14 @@
     });
   }
 
+  // read one range (e.g. "'Sheet1'!A5") as raw values
+  async function getValues(spreadsheetId, range) {
+    const token = await getToken();
+    const data = await apiGet(
+      `${SHEETS}/${spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE`, token);
+    return data.values || [];
+  }
+
   function appendRow(spreadsheetId, sheetTitle, row) {
     const range = encodeURIComponent(`'${sheetTitle.replace(/'/g, "''")}'!A1`);
     return apiSend('POST',
@@ -254,6 +262,7 @@
     fetchDriveFolderFiles,
     fetchDriveFile,
     updateCells,
+    getValues,
     appendRow,
     deleteRow,
     uploadToDrive,

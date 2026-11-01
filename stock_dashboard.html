@@ -23,15 +23,16 @@
     <div class="tabs" id="tabs"></div>
 
     <div class="controls">
-      <input class="search" id="search" placeholder="ค้นชื่อ / location / batch...">
-      <select class="filter-select" id="status-filter">
-        <option value="">All status</option>
+      <input class="search" id="search" type="search" placeholder="ค้นชื่อ / ที่เก็บ / batch..." aria-label="ค้นหา">
+      <select class="filter-select" id="status-filter" aria-label="กรองตามสถานะ">
+        <option value="">ยังใช้อยู่</option>
         <option value="Active">Active</option>
         <option value="Stock">Stock</option>
         <option value="Finished">Finished</option>
+        <option value="__all__">ทุกสถานะ</option>
       </select>
-      <select class="filter-select" id="location-filter">
-        <option value="">All locations</option>
+      <select class="filter-select" id="location-filter" aria-label="กรองตามที่เก็บ">
+        <option value="">ทุกที่เก็บ</option>
       </select>
     </div>
 
@@ -41,6 +42,8 @@
   <div class="ptr" id="ptr" aria-live="polite"><span class="ptr-icon" id="ptr-icon">↓</span><span id="ptr-text">ดึงลงเพื่อรีเฟรช</span></div>
 
   <button class="fab" id="fab-add" aria-label="เพิ่มรายการ" hidden>+</button>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="modal-backdrop" id="modal-backdrop">
     <div class="modal" id="modal" role="dialog" aria-modal="true"></div>

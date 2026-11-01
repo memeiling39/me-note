@@ -17,24 +17,30 @@ function renderTabs() {
   if (currentCat !== '__all__' && !cats.includes(currentCat)) currentCat = cats[0] || '__all__';
   document.getElementById('tabs').innerHTML = [...cats, '__all__'].map(c => `
     <button class="tab${c === currentCat ? ' active' : ''}" data-cat="${escapeHtml(c)}">
-      ${escapeHtml(c === '__all__' ? 'All' : CATEGORY_LABELS[c] || c)}
+      ${escapeHtml(c === '__all__' ? 'ทั้งหมด' : CATEGORY_LABELS[c] || c)}
     </button>`).join('');
 }
 const STATUSES = ['Active', 'Stock', 'Finished'];
+const TAB_STORAGE_KEY = 'me-note-stock-tab';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 let allRows = [];
 let sheetTitle = '';
 let header = [];
 let formOpen = false;
-let photoMap = {};  // filename → file id
+let photoMap = {};    // filename → file id
+let lastGroups = {};  // group key → group, for opening the detail modal
 let currentCat = 'เครื่องสำอาง';
+try { currentCat = localStorage.getItem(TAB_STORAGE_KEY) || currentCat; } catch {}
 
 // ── parse expiry: Google Sheets serial number, or "21/5/28" / "4/4/2027" ──
 function parseExpiry(v) {
   if (v === null || v === undefined || v === '') return null;
-  // Sheets UNFORMATTED_VALUE returns dates as serial numbers (days since 1899-12-30)
+  // Sheets UNFORMATTED_VALUE returns dates as serial numbers (days since 1899-12-30);
+  // read it as a calendar day so it lands on local midnight like the d/m/y dates below
   if (typeof v === 'number' && isFinite(v) && v > 1000) {
-    return new Date(Math.round((v - 25569) * 86400 * 1000));
+    const u = new Date(Math.round((v - 25569) * DAY_MS));
+    return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate());
   }
   const s = String(v).trim();
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
@@ -53,19 +59,40 @@ const EXPIRY_RULES = {
   'ของกิน': { soon: 5, warn: 14 },
 };
 
+// '' | 'warn' | 'soon' | 'expired' — the expiry day itself still counts as usable ('soon')
 function expiryLevel(category, date) {
   const d = daysUntil(date);
   if (d === null) return '';
+  if (d < 0) return 'expired';
   const rule = EXPIRY_RULES[category] || EXPIRY_RULES.default;
   if (d < rule.soon) return 'soon';
   if (d < rule.warn) return 'warn';
   return '';
 }
 
+// whole calendar days from today to date: 0 = today, -1 = yesterday
 function daysUntil(date) {
   if (!date) return null;
   const now = new Date();
-  return Math.floor((date - now) / (1000 * 60 * 60 * 24));
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((day - today) / DAY_MS);
+}
+
+// rows with a blank or unknown status are treated as Active everywhere
+function statusOf(row) {
+  return STATUSES.includes(row.status) ? row.status : 'Active';
+}
+
+function countByStatus(items) {
+  const counts = { Active: 0, Stock: 0, Finished: 0 };
+  for (const i of items) counts[statusOf(i)] += i.qty;
+  return counts;
+}
+
+// first photo any item in the group has, so the list and the detail show the same picture
+function groupPhoto(items) {
+  return (items.find(i => i.photo) || {}).photo || '';
 }
 
 function fmtDate(d) {
@@ -84,8 +111,9 @@ function render() {
   if (currentCat !== '__all__') {
     rows = rows.filter(r => r.category === currentCat);
   }
-  if (statusFilter) rows = rows.filter(r => r.status === statusFilter);
-  else rows = rows.filter(r => r.status !== 'Finished');
+  if (statusFilter === '__all__') { /* every status */ }
+  else if (statusFilter) rows = rows.filter(r => statusOf(r) === statusFilter);
+  else rows = rows.filter(r => statusOf(r) !== 'Finished');
   if (locFilter) rows = rows.filter(r => r.location === locFilter);
   if (search) {
     rows = rows.filter(r =>
@@ -101,7 +129,7 @@ function render() {
   for (const r of rows) {
     const type = r.type || '(ไม่ระบุ)';
     if (!byType.has(type)) byType.set(type, new Map());
-    const key = `${r.barcode}|${r.name}`;
+    const key = `${type}|${r.barcode}|${r.name}`;
     const grp = byType.get(type);
     if (!grp.has(key)) grp.set(key, { key, name: r.name, items: [] });
     grp.get(key).items.push(r);
@@ -244,20 +272,16 @@ function setPreviewPhoto(preview, photoPath) {
 }
 
 function renderItem(group) {
-  // aggregate counts by status
-  const counts = { Active: 0, Stock: 0, Finished: 0 };
+  const counts = countByStatus(group.items);
   let earliestExpiry = null;
   const locations = new Set();
-  let photoPath = '';
   for (const i of group.items) {
-    if (counts[i.status] !== undefined) counts[i.status] += i.qty;
-    else counts.Active += i.qty;
     if (i.expiryDate && (!earliestExpiry || i.expiryDate < earliestExpiry)) {
       earliestExpiry = i.expiryDate;
     }
     if (i.location) locations.add(i.location);
-    if (!photoPath && i.photo) photoPath = i.photo;
   }
+  const photoPath = groupPhoto(group.items);
 
   const expiryClass = expiryLevel(group.items[0].category, earliestExpiry);
 
@@ -269,31 +293,25 @@ function renderItem(group) {
   const imgHtml = photoTag(photoPath, 120, 'item-photo', 'loading="lazy"') || '<div class="item-photo photo-loading"></div>';
 
   return `
-    <div class="item" data-key="${escapeHtml(group.key)}">
+    <div class="item" role="button" tabindex="0" data-key="${escapeHtml(group.key)}">
       ${imgHtml}
       <div class="item-main">
         <div class="item-name">${escapeHtml(group.name)}</div>
         <div class="count-pills">${pills.join('')}</div>
       </div>
       <div class="item-right">
-        ${earliestExpiry ? `<div class="item-expiry ${expiryClass}">${fmtDate(earliestExpiry)}</div>` : ''}
+        ${earliestExpiry ? `<div class="item-expiry ${expiryClass}"${expiryClass === 'expired' ? ' title="หมดอายุแล้ว"' : ''}>${fmtDate(earliestExpiry)}</div>` : ''}
         ${locations.size ? `<div class="item-loc">${[...locations].map(escapeHtml).join(', ')}</div>` : ''}
       </div>
     </div>
   `;
 }
 
-// keep a flat map of key → group for modal lookup
-let lastGroups = {};
-
 function openDetail(key) {
   const g = lastGroups[key];
   if (!g) return;
   stopScanner();
-  const counts = { Active: 0, Stock: 0, Finished: 0 };
-  for (const i of g.items) {
-    if (counts[i.status] !== undefined) counts[i.status] += i.qty;
-  }
+  const counts = countByStatus(g.items);
   const summary = Object.entries(counts)
     .filter(([, n]) => n > 0)
     .map(([s, n]) => `${n} ${s}`)
@@ -307,50 +325,53 @@ function openDetail(key) {
   });
 
   const sample = g.items[0];
+  // one tappable card per sheet row: works on a phone where a 6-column table would be squeezed
   const rows = sorted.map(i => {
+    const status = statusOf(i);
     const level = expiryLevel(i.category, i.expiryDate);
-    const cls = level ? `expiry-${level}` : '';
+    const expiry = i.expiryDate
+      ? `<span class="variant-expiry ${level}">${level === 'expired' ? 'หมดอายุ ' : 'หมด '}${fmtDate(i.expiryDate)}</span>`
+      : '<span class="variant-expiry">ไม่ระบุวันหมดอายุ</span>';
+    const meta = [i.location, i.batch || i.detail].filter(Boolean).map(escapeHtml).join(' · ');
     return `
-      <tr data-row="${i.rowNumber}">
-        <td>${escapeHtml(i.status)}</td>
-        <td>${i.qty} ${escapeHtml(i.unit)}</td>
-        <td class="${cls}">${i.expiryDate ? fmtDate(i.expiryDate) : '—'}</td>
-        <td>${escapeHtml(i.location || '—')}</td>
-        <td>${escapeHtml(i.batch || i.detail || '')}</td>
-        <td class="edit-cell">✎</td>
-      </tr>
+      <button type="button" class="variant" data-row="${i.rowNumber}" aria-label="แก้ไข ${escapeHtml(status)} ${i.qty} ${escapeHtml(i.unit)}">
+        <span class="variant-top">
+          <span class="pill ${status.toLowerCase()}">${escapeHtml(status)}</span>
+          <span class="variant-qty">${i.qty} ${escapeHtml(i.unit)}</span>
+          ${expiry}
+        </span>
+        ${meta ? `<span class="variant-meta">${meta}</span>` : ''}
+        <span class="variant-edit" aria-hidden="true">✎</span>
+      </button>
     `;
   }).join('');
 
   document.getElementById('modal').innerHTML = `
     <button class="modal-close" id="modal-close-btn" aria-label="ปิด">×</button>
     <div class="modal-photo-wrap">
-      ${photoTag(sample.photo, 600, 'modal-photo')}
+      ${photoTag(groupPhoto(g.items), 600, 'modal-photo')}
     </div>
     <div class="modal-body">
       <div class="modal-field">
-        <div class="label">Item Name</div>
+        <div class="label">ชื่อ</div>
         <div class="value">${escapeHtml(sample.name)}</div>
       </div>
       <div class="modal-field">
-        <div class="label">Category · Type</div>
+        <div class="label">หมวด · ประเภท</div>
         <div class="value">${escapeHtml(sample.category)} · ${escapeHtml(sample.type || '—')}</div>
       </div>
       ${sample.barcode ? `
       <div class="modal-field">
-        <div class="label">Barcode</div>
+        <div class="label">บาร์โค้ด</div>
         <div class="value">${escapeHtml(sample.barcode)}</div>
       </div>` : ''}
       <div class="modal-field">
-        <div class="label">Summary</div>
+        <div class="label">สรุป</div>
         <div class="value">${escapeHtml(summary)}</div>
       </div>
       <div class="modal-divider"></div>
-      <table class="modal-table">
-        <thead><tr><th>Status</th><th>Qty</th><th>Expiry</th><th>Location</th><th>Batch / Detail</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="modal-hint">แตะแถวเพื่อแก้ไขหรือลบ</div>
+      <div class="variant-list">${rows}</div>
+      <div class="modal-hint">แตะแต่ละชิ้นเพื่อแก้ไขหรือลบ</div>
       <div class="modal-actions">
         <button class="btn btn-primary" id="add-variant-btn">+ เพิ่มชิ้นใหม่ของรายการนี้</button>
       </div>
@@ -359,9 +380,9 @@ function openDetail(key) {
   showModal();
   formOpen = false;
   document.getElementById('modal-close-btn').onclick = closeDetail;
-  document.querySelectorAll('#modal tbody tr').forEach(tr => {
-    tr.onclick = () => {
-      const row = allRows.find(r => r.rowNumber === Number(tr.dataset.row));
+  document.querySelectorAll('#modal .variant').forEach(btn => {
+    btn.onclick = () => {
+      const row = allRows.find(r => r.rowNumber === Number(btn.dataset.row));
       if (row) openForm({ row, backKey: key });
     };
   });
@@ -472,7 +493,7 @@ function openForm({ row, template, backKey }) {
     <form class="modal-body" id="item-form" style="padding-top:1.5rem" autocomplete="off">
       <div class="form-title">${isEdit ? 'แก้ไขรายการ' : 'เพิ่มรายการ'}</div>
       <div class="form-grid">
-        <label class="full">Barcode
+        <label class="full">บาร์โค้ด
           <div class="barcode-row">
             <input name="barcode" id="barcode-input" inputmode="numeric" value="${escapeHtml(v.barcode || '')}">
             <button type="button" class="scan-icon" id="scan-btn" aria-label="สแกนบาร์โค้ด" title="สแกนบาร์โค้ด">
@@ -488,44 +509,44 @@ function openForm({ row, template, backKey }) {
           <button type="button" class="btn" id="scan-stop-btn">ปิดกล้อง</button>
         </div>
         <div class="full barcode-note" id="barcode-note" hidden></div>
-        <label class="full">Item Image
+        <label class="full">รูป
           <div class="photo-drop">
             ${photoTag(v.photo, 600, '', 'id="photo-preview"') || '<img id="photo-preview" hidden referrerpolicy="no-referrer">'}
             <span class="photo-hint" id="photo-hint">${img ? 'แตะเพื่อเปลี่ยนรูป' : '+ แตะเพื่อเลือกรูป'}</span>
           </div>
           <input type="file" accept="image/*" id="photo-input" hidden>
         </label>
-        <label class="full">Item Name
+        <label class="full">ชื่อ
           <input name="name" required value="${escapeHtml(v.name || '')}">
         </label>
-        <label>Category
+        <label>หมวด
           <select name="category">${options(cats, v.category)}</select>
         </label>
-        <label>Type
+        <label>ประเภท
           ${pickHTML('type', typesFor(v.category), v.type)}
         </label>
-        <label>Status
+        <label>สถานะ
           <select name="status">${options(STATUSES, v.status)}</select>
         </label>
-        <label>Location
+        <label>ที่เก็บ
           ${pickHTML('location', allRows.map(r => r.location), v.location)}
         </label>
-        <label>Qty
+        <label>จำนวน
           <input name="qty" type="number" min="0" step="1" inputmode="numeric" value="${v.qty ?? 1}">
         </label>
-        <label>Unit
+        <label>หน่วย
           ${pickHTML('unit', allRows.map(r => r.unit), v.unit)}
         </label>
-        <label>Expiry Date
+        <label>วันหมดอายุ
           <input name="expiry" type="date" value="${toInputDate(v.expiryDate)}">
         </label>
-        <label>Price
+        <label>ราคา
           <input name="price" type="number" min="0" step="any" inputmode="decimal" value="${escapeHtml(v.price ?? '')}">
         </label>
-        <label>Batch Code
+        <label>Batch code
           <input name="batch" value="${escapeHtml(v.batch || '')}">
         </label>
-        <label>Detail
+        <label>รายละเอียด
           <input name="detail" value="${escapeHtml(v.detail || '')}">
         </label>
       </div>
@@ -591,8 +612,16 @@ function openForm({ row, template, backKey }) {
 
   document.getElementById('photo-input').onchange = async e => {
     const file = e.target.files[0];
+    e.target.value = '';   // so picking the same file again still fires change
     if (!file) return;
-    photoBlob = await compressImage(file);
+    const errBox = document.getElementById('form-error');
+    errBox.innerHTML = '';
+    try {
+      photoBlob = await compressImage(file);
+    } catch (err) {
+      errBox.innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+      return;
+    }
     const preview = document.getElementById('photo-preview');
     delete preview.dataset.photoId;
     preview.style.visibility = '';
@@ -610,7 +639,10 @@ function openForm({ row, template, backKey }) {
   if (isEdit) {
     document.getElementById('delete-btn').onclick = () => {
       if (!confirm(`ลบ "${row.name}" (${row.status}, ${row.qty} ${row.unit}) ออกจากชีท?`)) return;
-      runWrite(() => MeNoteAuth.deleteRow(SHEET_ID, sheetTitle, row.rowNumber));
+      runWrite(async () => {
+        await assertRowUnchanged(row);
+        await MeNoteAuth.deleteRow(SHEET_ID, sheetTitle, row.rowNumber);
+      });
     };
   }
 }
@@ -714,14 +746,46 @@ async function runWrite(fn) {
     // first, while still inside the tap, so Google's popup is allowed if the token has expired
     await MeNoteAuth.getToken({ interactive: true });
     await fn();
-    await reload();
-    closeDetail();
   } catch (err) {
     console.error(err);
     errBox.innerHTML = `<div class="form-error">บันทึกไม่สำเร็จ: ${escapeHtml(err.message)}</div>`;
     buttons.forEach(b => (b.disabled = false));
     if (saveBtn) saveBtn.textContent = 'บันทึก';
+    return;
   }
+  // the sheet is already written; a failed refresh must not invite a second save (duplicate row)
+  closeDetail();
+  try {
+    await reload();
+    toast('บันทึกแล้ว');
+  } catch (err) {
+    console.error(err);
+    toast('บันทึกแล้ว แต่โหลดข้อมูลใหม่ไม่สำเร็จ — ดึงหน้าลงเพื่อรีเฟรช', 4000);
+  }
+}
+
+function toast(message, ms = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+// rows are written by row number; if the sheet changed elsewhere (e.g. the Keep Me app) since we
+// loaded it, that number may now point at a different item, so check its Item ID first
+async function assertRowUnchanged(row) {
+  const idCol = header.indexOf('Item ID');
+  if (idCol < 0) return;
+  const values = await MeNoteAuth.getValues(SHEET_ID, `${sheetRef()}!${colLetter(idCol)}${row.rowNumber}`);
+  const current = values[0] && values[0][0] != null ? String(values[0][0]) : '';
+  if (current !== String(row.id)) {
+    throw new Error('ข้อมูลในชีทเปลี่ยนไปแล้ว ดึงหน้าลงเพื่อรีเฟรชแล้วลองใหม่');
+  }
+}
+
+function sheetRef() {
+  return `'${sheetTitle.replace(/'/g, "''")}'`;
 }
 
 function compressImage(file, maxSide = 1200) {
@@ -765,6 +829,7 @@ function nowStamp() {
 const asText = s => (s ? `'${s}` : '');
 
 async function saveItem(row, fd, photoBlob, existingPhoto) {
+  if (row) await assertRowUnchanged(row);   // before uploading a photo we might not use
   const itemId = row ? row.id : newItemId();
   let photo = existingPhoto || '';
   if (photoBlob) {
@@ -793,12 +858,11 @@ async function saveItem(row, fd, photoBlob, existingPhoto) {
     'last update': nowStamp(),
   };
 
-  const sheetRef = `'${sheetTitle.replace(/'/g, "''")}'`;
   if (row) {
     const data = Object.entries(fields)
       .filter(([col]) => header.indexOf(col) >= 0)
       .map(([col, val]) => ({
-        range: `${sheetRef}!${colLetter(header.indexOf(col))}${row.rowNumber}`,
+        range: `${sheetRef()}!${colLetter(header.indexOf(col))}${row.rowNumber}`,
         values: [[val]],
       }));
     await MeNoteAuth.updateCells(SHEET_ID, data);
@@ -819,32 +883,34 @@ async function reload() {
 }
 
 function renderSummary() {
-  const totals = { active: 0, stock: 0, finished: 0, expiringSoon: 0 };
+  const counts = countByStatus(allRows);
+  let soon = 0, expired = 0;
   for (const r of allRows) {
-    if (r.status === 'Active') totals.active += r.qty;
-    else if (r.status === 'Stock') totals.stock += r.qty;
-    else if (r.status === 'Finished') totals.finished += r.qty;
-    const d = daysUntil(r.expiryDate);
-    if (r.status !== 'Finished' && d !== null && d >= 0 && expiryLevel(r.category, r.expiryDate) === 'soon') {
-      totals.expiringSoon += r.qty;
-    }
+    if (statusOf(r) === 'Finished') continue;
+    const level = expiryLevel(r.category, r.expiryDate);
+    if (level === 'soon') soon += r.qty;
+    else if (level === 'expired') expired += r.qty;
   }
   document.getElementById('summary').innerHTML = `
     <div class="stat ok">
       <div class="label">Active</div>
-      <div class="value">${totals.active}</div>
+      <div class="value">${counts.Active}</div>
     </div>
     <div class="stat">
       <div class="label">Stock</div>
-      <div class="value">${totals.stock}</div>
-    </div>
-    <div class="stat alert">
-      <div class="label">Expiring soon</div>
-      <div class="value">${totals.expiringSoon}</div>
+      <div class="value">${counts.Stock}</div>
     </div>
     <div class="stat">
       <div class="label">Finished</div>
-      <div class="value">${totals.finished}</div>
+      <div class="value">${counts.Finished}</div>
+    </div>
+    <div class="stat warn">
+      <div class="label">ใกล้หมดอายุ</div>
+      <div class="value">${soon}</div>
+    </div>
+    <div class="stat alert">
+      <div class="label">หมดอายุแล้ว</div>
+      <div class="value">${expired}</div>
     </div>
   `;
 }
@@ -859,27 +925,32 @@ function rowsFromSheet(values) {
   if (!values || !values.length) return [];
   header = values[0].map(h => String(h).trim());
   const idx = name => header.indexOf(name);
+  // UNFORMATTED_VALUE gives numbers for cells like "100" or "3", so make every text field a string
+  const text = (r, name) => {
+    const v = r[idx(name)];
+    return v === null || v === undefined ? '' : String(v).trim();
+  };
   return values
     .map((r, i) => ({ r, rowNumber: i + 1 }))
     .slice(1)
-    .filter(({ r }) => r[idx('Item ID')])
+    .filter(({ r }) => text(r, 'Item ID'))
     .map(({ r, rowNumber }) => ({
       rowNumber,
-      id: r[idx('Item ID')] || '',
-      barcode: String(r[idx('Barcode')] || ''),
-      name: r[idx('Item Name')] || '',
-      category: r[idx('Category')] || '',
-      type: r[idx('Type')] || '',
+      id: text(r, 'Item ID'),
+      barcode: text(r, 'Barcode'),
+      name: text(r, 'Item Name'),
+      category: text(r, 'Category'),
+      type: text(r, 'Type'),
       qty: parseInt(r[idx('Qty')]) || 0,
-      unit: r[idx('Unit')] || '',
-      status: r[idx('Status')] || '',
+      unit: text(r, 'Unit'),
+      status: text(r, 'Status'),
       expiryRaw: r[idx('Expiry Date')] ?? '',
       expiryDate: parseExpiry(r[idx('Expiry Date')]),
-      photo: r[idx('Photo')] || '',
-      price: r[idx('Price')] || '',
-      location: r[idx('Location')] || '',
-      batch: String(r[idx('Batch Code')] || ''),
-      detail: r[idx('Detail')] || '',
+      photo: text(r, 'Photo'),
+      price: r[idx('Price')] ?? '',   // keep a price of 0
+      location: text(r, 'Location'),
+      batch: text(r, 'Batch Code'),
+      detail: text(r, 'Detail'),
     }));
 }
 
@@ -920,10 +991,10 @@ function handleData(data) {
   allRows = rowsFromSheet(values);
 
   // populate location filter
-  const locs = [...new Set(allRows.map(r => r.location).filter(Boolean))].sort();
+  const locs = [...new Set(allRows.map(r => r.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
   const locSel = document.getElementById('location-filter');
   const prevLoc = locSel.value;
-  locSel.innerHTML = '<option value="">All locations</option>';
+  locSel.innerHTML = '<option value="">ทุกที่เก็บ</option>';
   for (const l of locs) {
     const o = document.createElement('option');
     o.value = l; o.textContent = l;
@@ -955,16 +1026,30 @@ document.getElementById('tabs').addEventListener('click', e => {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
   currentCat = t.dataset.cat;
+  try { localStorage.setItem(TAB_STORAGE_KEY, currentCat); } catch {}
   render();
 });
-document.getElementById('search').addEventListener('input', render);
+// wait for a pause in typing so the list (and its photos) isn't rebuilt on every key
+let searchTimer = null;
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(render, 150);
+});
 document.getElementById('status-filter').addEventListener('change', render);
 document.getElementById('location-filter').addEventListener('change', render);
 
-// open detail on item click (delegated)
-document.getElementById('content').addEventListener('click', e => {
+// open detail on item click or Enter/Space (delegated)
+const contentEl = document.getElementById('content');
+contentEl.addEventListener('click', e => {
   const item = e.target.closest('.item');
   if (item && item.dataset.key) openDetail(item.dataset.key);
+});
+contentEl.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const item = e.target.closest('.item');
+  if (!item || !item.dataset.key) return;
+  e.preventDefault();
+  openDetail(item.dataset.key);
 });
 // close modal on backdrop click or Esc
 // forms ignore backdrop/Esc so a stray tap doesn't drop what was typed
@@ -976,7 +1061,6 @@ document.addEventListener('keydown', e => {
 });
 document.getElementById('fab-add').addEventListener('click', () => openForm({}));
 
-// ── pull to refresh: re-fetches sheet + photo list without reloading the page ──
 // iOS keeps the layout viewport full height when the keyboard opens, so the modal would sit
 // under the keyboard; size the backdrop to the visible area and bring the focused field into view.
 (function fitModalAboveKeyboard() {
@@ -998,6 +1082,7 @@ document.getElementById('fab-add').addEventListener('click', () => openForm({}))
   });
 })();
 
+// ── pull to refresh: re-fetches sheet + photo list without reloading the page ──
 (function setupPullToRefresh() {
   const ptr = document.getElementById('ptr');
   const icon = document.getElementById('ptr-icon');
